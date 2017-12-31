@@ -25,7 +25,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        MainWindow.cpp
+        MainWindow.cpp \
+    sci_dll_functions.cpp
 
 HEADERS += \
-        MainWindow.h
+        MainWindow.h \
+    sci_dll_functions.h \
+    SCModule.h

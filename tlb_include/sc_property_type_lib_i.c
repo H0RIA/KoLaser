@@ -1,0 +1,127 @@
+
+
+/* this ALWAYS GENERATED file contains the IIDs and CLSIDs */
+
+/* link this file in with the server and any clients */
+
+
+ /* File created by MIDL compiler version 7.00.0500 */
+/* at Mon Jul 10 13:50:42 2017
+ */
+/* Compiler settings for d:\scaps\dll_source\property\com\include\sc_property_type_lib.idl:
+    Oicf, W1, Zp1, env=Win32 (32b run)
+    protocol : dce , ms_ext, c_ext, robust
+    error checks: allocation ref bounds_check enum stub_data 
+    VC __declspec() decoration level: 
+         __declspec(uuid()), __declspec(selectany), __declspec(novtable)
+         DECLSPEC_UUID(), MIDL_INTERFACE()
+*/
+//@@MIDL_FILE_HEADING(  )
+
+#pragma warning( disable: 4049 )  /* more than 64k source lines */
+
+
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
+#include <rpc.h>
+#include <rpcndr.h>
+
+#ifdef _MIDL_USE_GUIDDEF_
+
+#ifndef INITGUID
+#define INITGUID
+#include <guiddef.h>
+#undef INITGUID
+#else
+#include <guiddef.h>
+#endif
+
+#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \
+        DEFINE_GUID(name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)
+
+#else // !_MIDL_USE_GUIDDEF_
+
+#ifndef __IID_DEFINED__
+#define __IID_DEFINED__
+
+typedef struct _IID
+{
+    unsigned long x;
+    unsigned short s1;
+    unsigned short s2;
+    unsigned char  c[8];
+} IID;
+
+#endif // __IID_DEFINED__
+
+#ifndef CLSID_DEFINED
+#define CLSID_DEFINED
+typedef IID CLSID;
+#endif // CLSID_DEFINED
+
+#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \
+        const type name = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}
+
+#endif !_MIDL_USE_GUIDDEF_
+
+MIDL_DEFINE_GUID(IID, LIBID_ScapsSamProperty,0x31EE8E23,0xCBD1,0x11D1,0x8C,0x6C,0x00,0x80,0x48,0xEE,0xDC,0xB8);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IControlPropertyPage,0x5CEDB6C4,0xAFA3,0x11d2,0x9A,0xB8,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IPropertyPage,0x5CEDB6C2,0xAFA3,0x11d2,0x9A,0xB8,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IControlEntityProperty,0x68C8EAB2,0xCBEF,0x11d1,0x8C,0x6C,0x00,0x80,0x48,0xEE,0xDC,0xB8);
+
+
+MIDL_DEFINE_GUID(IID, DIID_SC_IControlEntityPropertyEvents,0x68C8EAB4,0xCBEF,0x11d1,0x8C,0x6C,0x00,0x80,0x48,0xEE,0xDC,0xB8);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IControlEntityExposure,0x484A2852,0xD2F2,0x11d1,0x8C,0x6F,0x00,0x80,0x48,0xEE,0xDC,0xB8);
+
+
+MIDL_DEFINE_GUID(IID, DIID__DSC_StandardEntityCtrl,0xED1FA1E6,0x8664,0x47D5,0xA6,0x09,0x15,0x02,0x41,0x5B,0x45,0xA4);
+
+
+MIDL_DEFINE_GUID(IID, DIID__DSC_StandardEntityCtrlEvents,0x25ABB2D4,0xDC20,0x4027,0x80,0x72,0x08,0x6C,0x49,0x76,0x2D,0x94);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IStandardEntityCtrl,0x5BAE2A95,0xA124,0x49b2,0x85,0xB5,0x98,0xA9,0x92,0x5D,0xB7,0x8F);
+
+
+MIDL_DEFINE_GUID(CLSID, CLSID_ScStandardEntityCtrl,0x526FDED5,0x4368,0x4bcc,0x8D,0x19,0xA0,0xA9,0x85,0x96,0xC0,0xD3);
+
+
+MIDL_DEFINE_GUID(IID, DIID__DScPropertySheet,0x2F519F37,0x2A3B,0x11d4,0x9B,0xDD,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(IID, IID_SC_IPropertySheet,0x2F519F39,0x2A3B,0x11d4,0x9B,0xDD,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(IID, DIID__DScPropertySheetEvents,0x2F519F3B,0x2A3B,0x11d4,0x9B,0xDD,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(CLSID, CLSID_ScPropertySheet,0x2F519F3D,0x2A3B,0x11d4,0x9B,0xDD,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(CLSID, CLSID_ScControlEntityProperty,0x1D72BE22,0xCC90,0x11d1,0x8C,0x6C,0x00,0x80,0x48,0xEE,0xDC,0xB8);
+
+
+MIDL_DEFINE_GUID(CLSID, CLSID_ScControlPropertyPage,0x5CEDB6C6,0xAFA3,0x11d2,0x9A,0xB8,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+
+MIDL_DEFINE_GUID(CLSID, CLSID_ScPropertyPage,0x5CEDB6C8,0xAFA3,0x11d2,0x9A,0xB8,0x00,0x80,0x48,0xEE,0xE0,0x0C);
+
+#undef MIDL_DEFINE_GUID
+
+#ifdef __cplusplus
+}
+#endif
+
+
+
