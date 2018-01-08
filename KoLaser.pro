@@ -4,7 +4,18 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += sql core gui
+
+macx {
+    QMAKE_CXXFLAGS += -std=c++11 -stdlib=libc++
+    QMAKE_LFLAGS += -std=c++11 -stdlib=libc++
+    QMAKE_CXXFLAGS += -std=c++1z
+    CONFIG += c++17
+
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+    QMAKE_CXXFLAGS += -mmacosx-version-min=10.9
+    QMAKE_LFLAGS += -mmacosx-version-min=10.9
+}
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,10 +37,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-    sci_dll_functions.cpp
+    sci_dll_functions.cpp \
+    Settings.cpp
 
 HEADERS += \
         MainWindow.h \
     sci_dll_functions.h \
     SCModule.h \
-    base.h
+    base.h \
+    Settings.h
