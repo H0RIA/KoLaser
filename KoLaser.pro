@@ -31,4 +31,5 @@ SOURCES += \
 HEADERS += \
         MainWindow.h \
     sci_dll_functions.h \
-    SCModule.h
+    SCModule.h \
+    base.h

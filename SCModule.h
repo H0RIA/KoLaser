@@ -1,7 +1,7 @@
 #ifndef SCMODULE_H
 #define SCMODULE_H
 
-#include <Windows.h>
+#include "base.h"
 
 #define LIBRARY_FILE_NAME_RELEASE   "sc_optic.dll"
 #define LIBRARY_FILE_NAME_DEBUG     "sc_optic_d.dll"

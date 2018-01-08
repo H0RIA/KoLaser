@@ -1,7 +1,7 @@
 #ifndef SCI_DLL_FUNCTIONS_H
 #define SCI_DLL_FUNCTIONS_H
 
-#include <windows.h>
+#include "base.h"
 
 /*** DLL interface defintitions *****************************************/
 
