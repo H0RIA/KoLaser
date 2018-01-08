@@ -35,6 +35,14 @@ class MainWindow : public QMainWindow
     private:
         void createActions();
         void createMenus();
+
+    private slots:
+        void onActionNew();
+        void onActionOpen();
+        void onActionSave();
+        void onActionExit();
+        void onActionHelp();
+        void onActionAbout();
 };
 
 #endif // MAINWINDOW_H
