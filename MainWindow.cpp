@@ -94,29 +94,35 @@ MainWindow::createMenus()
 void
 MainWindow::onActionNew()
 {
+    // TODO
 }
 
 void
 MainWindow::onActionOpen()
 {
+    // TODO
 }
 
 void
 MainWindow::onActionSave()
 {
+    // TODO
 }
 
 void
 MainWindow::onActionExit()
 {
+    // TODO
 }
 
 void
 MainWindow::onActionHelp()
 {
+    // TODO
 }
 
 void
 MainWindow::onActionAbout()
 {
+    // TODO
 }

@@ -38,11 +38,15 @@ SOURCES += \
         main.cpp \
         MainWindow.cpp \
     sci_dll_functions.cpp \
-    Settings.cpp
+    Settings.cpp \
+    StatusLabel.cpp \
+    LaserStatusWindow.cpp
 
 HEADERS += \
         MainWindow.h \
     sci_dll_functions.h \
     SCModule.h \
     base.h \
-    Settings.h
+    Settings.h \
+    LaserStatusWindow.h \
+    StatusLabel.h
