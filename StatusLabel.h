@@ -26,10 +26,12 @@ class StatusLabel : public QLabel
         void updateStatus(const SensorStatus status);
 
     protected:
+        virtual void initialize();
 
     private:
         QString         m_strText;
         QLabel          m_lblStatus;
+        QLabel          m_lblText;
         SensorStatus    m_enumStatus;
 };
 

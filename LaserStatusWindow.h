@@ -12,6 +12,8 @@ class LaserStatusWindow : public QLabel
         ~LaserStatusWindow();
 
     protected:
+        virtual void initialize();
+
     private:
         StatusLabel  m_lblPicoTest;
         StatusLabel  m_lblController;

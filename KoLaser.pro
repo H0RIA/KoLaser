@@ -40,7 +40,9 @@ SOURCES += \
     sci_dll_functions.cpp \
     Settings.cpp \
     StatusLabel.cpp \
-    LaserStatusWindow.cpp
+    LaserStatusWindow.cpp \
+    CentralWindow.cpp \
+    ProjectDesignWindow.cpp
 
 HEADERS += \
         MainWindow.h \
@@ -49,4 +51,9 @@ HEADERS += \
     base.h \
     Settings.h \
     LaserStatusWindow.h \
-    StatusLabel.h
+    StatusLabel.h \
+    CentralWindow.h \
+    ProjectDesignWindow.h
+
+RESOURCES += \
+    resources.qrc

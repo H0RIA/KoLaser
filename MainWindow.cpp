@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
         ,INIT_MEMBER(ActionExit)
         ,INIT_MEMBER(ActionHelp)
         ,INIT_MEMBER(ActionAbout)
+        ,m_wndCentralMain(this)
 {
     initialize();
 }
@@ -23,9 +24,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::initialize()
 {
-    QWidget* widget = new QWidget();
-    setCentralWidget(widget);
-
+    setCentralWidget(&m_wndCentralMain);
 
     createActions();
     createMenus();

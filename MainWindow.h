@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "base.h"
+#include "CentralWindow.h"
 
 class MainWindow : public QMainWindow
 {
@@ -43,6 +43,9 @@ class MainWindow : public QMainWindow
         void onActionExit();
         void onActionHelp();
         void onActionAbout();
+
+    private:
+        CentralWindow   m_wndCentralMain;
 };
 
 #endif // MAINWINDOW_H
