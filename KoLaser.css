@@ -5,3 +5,16 @@ QPushButton#btnStart_NotOK{
 QPushButton#btnStart_OK{
     background-color: rgb(40, 224, 40);
 }
+
+StatusLabel#status_label{
+    min-height: 30px;
+    max-height: 30px;
+    max-width: 200px;
+}
+
+#status_label_icon{
+    min-height: 30px;
+    min-width: 30px;
+    max-height: 30px;
+    max-width: 30px;
+}

@@ -15,6 +15,9 @@ StatusLabel::~StatusLabel(){}
 void
 StatusLabel::initialize()
 {
+    setObjectName("status_label");
+    m_lblStatus.setObjectName("status_label_icon");
+
     updateStatus(m_enumStatus);
     setStatusText(m_strText);
 
@@ -24,10 +27,6 @@ StatusLabel::initialize()
 
     layout->addSpacing(5);
     layout->addWidget(&m_lblStatus);
-
-    this->setMinimumSize(30, 30);
-    m_lblStatus.setMinimumSize(30, 30);
-    m_lblStatus.setMaximumSize(30, 30);
 
     setLayout(layout);
 }
