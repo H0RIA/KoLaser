@@ -15,9 +15,10 @@ void
 CentralWindow::initialize()
 {
     QHBoxLayout *layout = createLayout<QHBoxLayout>();
+    layout->setContentsMargins(10, 10, 10, 10);
 
-    layout->addWidget(&m_wndLaser);
-    layout->addWidget(&m_wndProject);
+    layout->addWidget(&m_wndLaser, 1);
+    layout->addWidget(&m_wndProject, 1);
 
     setLayout(layout);
 }

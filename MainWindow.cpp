@@ -24,6 +24,17 @@ MainWindow::~MainWindow()
 void
 MainWindow::initialize()
 {
+    QByteArray data;
+    QFile file(":/KoLaser.css");
+    if(file.open(QIODevice::ReadOnly)){
+        data += file.readAll();
+        file.close();
+    }else{
+        qDebug() << "Could not read css file: " << file.errorString();
+    }
+
+    qApp->setStyleSheet(data);
+
     setCentralWidget(&m_wndCentralMain);
 
     createActions();
@@ -32,6 +43,7 @@ MainWindow::initialize()
     setWindowTitle(APPLICATION_NAME);
     setMinimumSize(240, 240);
     restoreGeometry(Settings::instance()->loadAppGeometry());
+
     // TODO
 }
 

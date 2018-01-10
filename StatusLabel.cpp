@@ -25,8 +25,9 @@ StatusLabel::initialize()
     layout->addSpacing(5);
     layout->addWidget(&m_lblStatus);
 
-    m_lblStatus.setMaximumHeight(50);
-    m_lblStatus.setMaximumWidth(50);
+    this->setMinimumSize(30, 30);
+    m_lblStatus.setMinimumSize(30, 30);
+    m_lblStatus.setMaximumSize(30, 30);
 
     setLayout(layout);
 }
@@ -58,10 +59,10 @@ StatusLabel::updateStatus(const SensorStatus status)
     switch(m_enumStatus)
     {
     case SensorStatus::Error:
-        m_lblStatus.setPixmap(QPixmap(":/red-icon.png").scaled(m_lblStatus.size(), Qt::KeepAspectRatio));
+        m_lblStatus.setPixmap(QPixmap(":/images/red-icon.png").scaled(m_lblStatus.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
         break;
     case SensorStatus::OK:
-        m_lblStatus.setPixmap(QPixmap(":/olive-green-icon.png").scaled(m_lblStatus.size(), Qt::KeepAspectRatio));
+        m_lblStatus.setPixmap(QPixmap(":/images/olive-green-icon.png").scaled(m_lblStatus.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
         break;
     }
 }

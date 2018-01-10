@@ -1,0 +1,7 @@
+QPushButton#btnStart_NotOK{
+    background-color: rgb(224, 40, 40);
+}
+
+QPushButton#btnStart_OK{
+    background-color: rgb(40, 224, 40);
+}
