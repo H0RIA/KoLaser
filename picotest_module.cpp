@@ -16,8 +16,8 @@ bool pico_load_dll_functions(HMODULE pico_dll_handle)
 
     PviOpenDefaultRM_usb = (dll_PviOpenDefaultRM_usb)GetProcAddress(pico_dll_handle,"viOpenDefaultRM");
     PviFindRsrc_usb = (dll_PviFindRsrc_usb)GetProcAddress(pico_dll_handle,"viFindRsrc");
-    PviOpen_usb = (dll_PviOpen_usb)GetProcAddress(pico_dll_handle,"viClose");
-    PviClose_usb = (dll_PviClose_usb)GetProcAddress(pico_dll_handle,"viOpen");
+    PviOpen_usb = (dll_PviOpen_usb)GetProcAddress(pico_dll_handle,"viOpen");
+    PviClose_usb = (dll_PviClose_usb)GetProcAddress(pico_dll_handle,"viClose");
     PviWrite_usb = (dll_PviWrite_usb)GetProcAddress(pico_dll_handle,"viWrite");
     PviRead_usb = (dll_PviRead_usb)GetProcAddress(pico_dll_handle,"viRead");
     PviSetAttribute_usb = (dll_PviSetAttribute_usb)GetProcAddress(pico_dll_handle,"viSetAttribute");
@@ -36,14 +36,43 @@ bool pico_load_dll_functions(HMODULE pico_dll_handle)
 
 PicoTestModule::PicoTestModule()
     :   mPicoLib(nullptr)
+        ,mDefaultRMUsbtmc(0)
+        ,mInstrUsbtmc(0)
+        ,mBuffer()
+        ,mInstrDescriptor()
+        ,mTimeout(7000)
 {
     initialize();
+
+    long status = OpenDefaultRMUsb(&mDefaultRMUsbtmc);
+    if(status < PICO_OK){
+        CloseUsb(mDefaultRMUsbtmc);
+        mDefaultRMUsbtmc = 0;
+    }else{
+        unsigned long m_findList_usbtmc;
+        unsigned long m_nCount;
+
+        status = FindRsrcUsb(mDefaultRMUsbtmc,
+                             "USB[0-9]*::0x164E::0x0DAD::?*INSTR",
+                             &m_findList_usbtmc,
+                             &m_nCount,
+                             mInstrDescriptor);
+        if(status < PICO_OK){
+            // bla bla
+        }else{
+            status = OpenUsb(mDefaultRMUsbtmc, mInstrDescriptor, 0, 0, &mInstrUsbtmc);
+            status = SetAttributeUsb(mInstrUsbtmc, VI_ATTR_TMO_VALUE, mTimeout);
+
+            test();
+        }
+    }
 }
 
 PicoTestModule::~PicoTestModule()
 {
     if(mPicoLib != nullptr){
-        // bla bla
+        FreeLibrary (mPicoLib);
+        mPicoLib = nullptr;
     }
 }
 
@@ -60,7 +89,7 @@ PicoTestModule::OpenDefaultRMUsb(unsigned long *vi)
 
 long
 PicoTestModule::FindRsrcUsb( unsigned long sesn,
-                  char *expr,
+                  const char *expr,
                   unsigned long *vi,
                   unsigned long *retCnt,
                   char far desc[])
@@ -70,7 +99,7 @@ PicoTestModule::FindRsrcUsb( unsigned long sesn,
         return -1;
     }
 
-    return PviFindRsrc_usb(sesn, expr, vi, retCnt, desc);
+    return PviFindRsrc_usb(sesn, (char*)expr, vi, retCnt, desc);
 }
 
 
@@ -152,5 +181,100 @@ PicoTestModule::initialize()
         return;
     }else{
         pico_load_dll_functions(mPicoLib);
+
     }
+
+    memset(mBuffer, 0, PICO_BUFFER_SIZE);
+    memset(mInstrDescriptor, 0, PICO_INSTR_DESCRIPTOR_SIZE);
+}
+
+void PicoTestModule::test()
+{
+    ULONG       nWritten;
+    ULONG       nRead = 0;
+    int         len = 64;
+    char        *pStrout = nullptr;
+    BYTE        pStrin[64];
+
+    pStrout = new char[len];
+    long status = 0;
+    ZeroMemory(pStrout, len);
+    strcpy(pStrout, "*idn?");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 6, &nWritten);
+    Sleep(30);
+    if (status != VI_SUCCESS)
+    {
+        qDebug("Write to device error.");
+        CloseUsb(mDefaultRMUsbtmc);
+        return;
+    }
+    else
+    {
+        qDebug() << " output : *IDN?\n";
+    }
+
+    Sleep(1000);
+    // Read data from device
+
+    len = 64;
+    if (mPicoLib)
+    {
+        status = ReadUsb(mInstrUsbtmc, pStrin, len, &nRead);
+        if (nRead > 0)
+        {
+            for (len=0; len < (long) nRead; len++)
+            {
+                mBuffer[len] = pStrin[len];
+            }
+        }
+        mBuffer[nRead] = '\0';
+        qDebug() << QString(" input : %1\n\n").arg(mBuffer);
+    }
+
+    // Set sample count to 1
+    strcpy(pStrout, "SAMP:COUN 1");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 12, &nWritten);
+    Sleep(30);
+
+    // Set configure Voltage AC, range 0.1A
+    strcpy(pStrout, "CONF:VOLT:AC 0.1,0.01");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 22, &nWritten);
+    Sleep(3000);
+
+    // Set configure frequency, range Auto
+    strcpy(pStrout, "CONF:FREQ");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 10, &nWritten);
+    Sleep(3000);
+
+    // Set configure Current DC, range 0.1A
+    strcpy(pStrout, "CONF:CURR:DC 1,0.01");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 20, &nWritten);
+    Sleep(3000);
+
+    // Set Voltage DC measure
+    strcpy(pStrout, "CONF:VOLT:DC 0.1,0.1");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 21, &nWritten);
+    Sleep(1000);
+
+    // Send read command
+    strcpy(pStrout, "READ?");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 6, &nWritten);
+    Sleep(30);
+    qDebug() << " output : READ?\n";
+
+    status = ReadUsb(mInstrUsbtmc, pStrin, 64, &nRead);
+    if (nRead > 0)
+    {
+        for (len=0; len < (long) nRead; len++)
+        {
+            mBuffer[len] = pStrin[len];
+        }
+    }
+    mBuffer[nRead] = '\0';
+    qDebug() << QString(" input : %1\n\n").arg(mBuffer);
+
+    // Set device to local mode
+    strcpy(pStrout, "system:local");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 13, &nWritten);
+    free(pStrout);
 }

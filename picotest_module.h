@@ -20,6 +20,10 @@ extern dll_PviWrite_usb             PviWrite_usb;
 extern dll_PviRead_usb              PviRead_usb;
 extern dll_PviSetAttribute_usb      PviSetAttribute_usb;
 
+#define PICO_BUFFER_SIZE            256
+#define PICO_INSTR_DESCRIPTOR_SIZE  256
+#define PICO_OK                     0L
+
 class PicoTestModule
 {
     public:
@@ -28,7 +32,7 @@ class PicoTestModule
 
         long OpenDefaultRMUsb(unsigned long *vi);
         long FindRsrcUsb( unsigned long sesn,
-                          char *expr,
+                          const char *expr,
                           unsigned long *vi,
                           unsigned long *retCnt,
                           char far desc[]);
@@ -55,9 +59,17 @@ class PicoTestModule
 
     private:
         PicoTestModule(const PicoTestModule& ptm) = delete;
+        void test();
 
     protected:
         HMODULE mPicoLib;
+
+    private:
+        unsigned long   mDefaultRMUsbtmc;
+        unsigned long   mInstrUsbtmc;
+        char            mBuffer[PICO_BUFFER_SIZE];
+        char            mInstrDescriptor[PICO_INSTR_DESCRIPTOR_SIZE];
+        int             mTimeout;
 };
 
 #endif // PICOTEST_MODULE_H
