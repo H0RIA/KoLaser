@@ -32,7 +32,8 @@ SOURCES += \
     scmodule.cpp \
     sci_dll_functions.cpp \
     picomodule.cpp \
-    controlboardmodule.cpp
+    controlboardmodule.cpp \
+    picotest_module.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -43,7 +44,8 @@ HEADERS += \
     sci_dll_functions.h \
     stubs_from_windows.h \
     picomodule.h \
-    controlboardmodule.h
+    controlboardmodule.h \
+    picotest_module.h
 
 FORMS += \
         mainwindow.ui
