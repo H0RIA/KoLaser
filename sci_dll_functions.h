@@ -3,9 +3,13 @@
 
 /*** DLL interface defintitions *****************************************/
 
+#include <windows.h>
+
+#ifndef _WIN32
 typedef char* LPSTR;
 typedef const char* LPCSTR;
 typedef void* HMODULE;
+#endif // !_WIN32
 
 typedef long (*dll_sc_sci_set_card_type)(char *card_type);
 typedef long (*dll_sc_sci_init_interface)(void);

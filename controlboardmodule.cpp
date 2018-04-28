@@ -35,6 +35,7 @@ ControlBoardModule::~ControlBoardModule()
 
 bool ControlBoardModule::initializeDevice()
 {
+    return true;
     if(mpSerialPort->write(QString("?").toLatin1()) == -1)
     {
         //Error Message box
@@ -77,4 +78,6 @@ bool ControlBoardModule::saveSerialSettings(QString qPortName,
     mpSerialPort->setParity(p);
     mpSerialPort->setStopBits(sb);
     mpSerialPort->setFlowControl(fc);
+
+    return true;
 }

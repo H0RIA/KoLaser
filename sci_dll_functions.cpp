@@ -1,8 +1,13 @@
 #include "sci_dll_functions.h"
+#include "Windows.h"
 
+/*
 void* GetProcAddress( HMODULE,LPCSTR)
-{}
+{
+    // TODO -> call only for windows
 
+}
+*/
 /*** DLL interface defintitions *****************************************/
 
 dll_sc_sci_set_card_type              sc_sci_set_card_type;

@@ -110,10 +110,11 @@ void MainWindow::on_openFileBtn_released()
 }
 void MainWindow::readJson(QString jsonFilePath)
 {
-    QFile file; /*file.setFileName(jsonFilePath);
+    QFile file;
+    file.setFileName(jsonFilePath);
     file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString json = file.readAll();*/
-    QString json;
+    QString json = file.readAll();
+    //QString json;
     if(json.isNull())
     {
         //TEST ONLY
@@ -299,7 +300,7 @@ void MainWindow::on_saveSerialSettings_released()
 
 void MainWindow::on_btnLaserSettings_released()
 {
-    if (QProcess::execute("C:\scaps\sam2d\tools\sc_setup.exe") == -2)
+    if (QProcess::execute("C:/scaps/sam2d/tools/sc_setup.exe") == -2)
     {
         printOutputToUser("Cannot start sc_setup.exe");
     }

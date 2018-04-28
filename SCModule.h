@@ -10,9 +10,11 @@
 #define LIBRARY_FILE_NAME_RELEASE   "sc_optic.dll"
 #define LIBRARY_FILE_NAME_DEBUG     "sc_optic_d.dll"
 
+#ifndef _WIN32
 typedef char* LPSTR;
 typedef const char* LPCSTR;
 typedef void* HMODULE;
+#endif // !_WIN32
 
 #define     SC_OK                                        1
 #define		SC_ERROR									-1
@@ -25,11 +27,22 @@ typedef void* HMODULE;
 #define SCI_LASER_YAG 0x0001
 #define SCI_LASER_CO2 0x0002
 
+#ifndef TREAT_RESULT
+#define TREAT_RESULT(fnName, res)   \
+    if (res != SC_OK)\
+    {\
+        QString strError = QString("%1 returned %2").arg(fnName).arg(res);\
+        showMessageBox(strError);\
+    }
+#endif // !TREAT_RESULT
+
 
 class SCModule
 {
     bool mbIsDeviceInitialized;
     bool mbAreSettingsLoaded;
+
+    HMODULE mLaserLib;
 
     QString mCarrFile;
     QString mSettingsFile;
