@@ -1,51 +1,61 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "CentralWindow.h"
+#include <QMainWindow>
+#include <QLabel>
+#include <QTimer>
+
+#include "projectdata.h"
+#include "painter.h"
+#include "scmodule.h"
+#include "picomodule.h"
+#include "controlboardmodule.h"
+
+namespace Ui {
+class MainWindow;
+}
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    DECLARE_PROPERTY_PTR(QMenu, MenuFile)
-    DECLARE_PROPERTY_PTR(QMenu, MenuHelp)
+public:
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
 
-    DECLARE_PROPERTY_PTR(QAction, ActionNew)
-    DECLARE_PROPERTY_PTR(QAction, ActionOpen)
-    DECLARE_PROPERTY_PTR(QAction, ActionSave)
-    DECLARE_PROPERTY_PTR(QAction, ActionExit)
+private:
+    Ui::MainWindow *ui;
 
-    DECLARE_PROPERTY_PTR(QAction, ActionHelp)
-    DECLARE_PROPERTY_PTR(QAction, ActionAbout)
+    ProjectData *mpProjectData;
+    Painter *mpPainter;
+    SCModule *mpScModule;
+    PicoModule *mpPicoModule;
+    ControlBoardModule *mpControlBoard;
 
-    DECLARE_PROPERTY_PTR(QLabel, LabelInfo)
+    QTimer *mpPicoTimer;
+    QTimer *mpCBTimer;
+    QTimer *mpAlignTimer;
 
-    public:
-        MainWindow(QWidget *parent = 0);
-        ~MainWindow();
+    bool bIsAligning;
 
-    protected:
-        void initialize();
-        void closeEvent(QCloseEvent * event)override;
+    void readJson(QString jsonFilePath);
+    void generateProjectData(QJsonDocument);
+    void generateGraph();
+    void validProjectLoaded(bool);
+    void setStatusOnButton(QLabel *pLabel, Status bStatus);
+    void printOutputToUser(QString qsMsg);
 
-#ifndef QT_NO_CONTEXTMENU
-        void contextMenuEvent(QContextMenuEvent *event) override;
-#endif // QT_NO_CONTEXTMENU
-
-    private:
-        void createActions();
-        void createMenus();
-
-    private slots:
-        void onActionNew();
-        void onActionOpen();
-        void onActionSave();
-        void onActionExit();
-        void onActionHelp();
-        void onActionAbout();
-
-    private:
-        CentralWindow   m_wndCentralMain;
+private slots:
+    void on_openFileBtn_released();
+    void on_InitLaserBtn_released();
+    void checkPicoHeartbeat();
+    void checkCbHeartbeat();
+    void on_saveSerialSettings_released();
+    void on_btnLaserSettings_released();
+    void on_startBtn_released();
+    void on_stopBtn_released();
+    void on_alignBtn_released();
+    void on_align_done();
 };
 
 #endif // MAINWINDOW_H

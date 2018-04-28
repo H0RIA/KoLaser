@@ -1,10 +1,7 @@
 <RCC>
-    <qresource prefix="/">
-        
-        <file>KoLaser.css</file>
-    </qresource>
-    <qresource prefix="/images">
-    	<file alias="olive-green-icon.png">images/olive-green-icon.png</file>
-        <file alias="red-icon.png">images/red-icon.png</file>
+    <qresource prefix="/new/resources">
+        <file>images/gray-dot.png</file>
+        <file>images/olive-green-icon.png</file>
+        <file>images/red-icon.png</file>
     </qresource>
 </RCC>

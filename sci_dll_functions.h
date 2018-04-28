@@ -1,9 +1,11 @@
 #ifndef SCI_DLL_FUNCTIONS_H
 #define SCI_DLL_FUNCTIONS_H
 
-#include "base.h"
-
 /*** DLL interface defintitions *****************************************/
+
+typedef char* LPSTR;
+typedef const char* LPCSTR;
+typedef void* HMODULE;
 
 typedef long (*dll_sc_sci_set_card_type)(char *card_type);
 typedef long (*dll_sc_sci_init_interface)(void);
@@ -125,7 +127,7 @@ extern dll_sc_sci_set_continuous_mode        sc_sci_set_continuous_mode;
 extern dll_sc_sci_get_continuous_mode        sc_sci_get_continuous_mode;
 extern dll_sc_sci_set_external_trigger       sc_sci_set_external_trigger;
 extern dll_sc_sci_get_external_trigger       sc_sci_get_external_trigger;
-extern dll_sc_sci_set_message_window         sc_sci_set_message_window;              
+extern dll_sc_sci_set_message_window         sc_sci_set_message_window;
 extern dll_sc_sci_set_axis_state		     sc_sci_set_axis_state;
 extern dll_sc_sci_get_axis_state		     sc_sci_get_axis_state;
 extern dll_sc_sci_load_settings              sc_sci_load_settings;

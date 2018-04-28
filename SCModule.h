@@ -1,20 +1,53 @@
 #ifndef SCMODULE_H
 #define SCMODULE_H
 
-#include "base.h"
+#include<QString>
+#include<QMessageBox>
+
+#include"stubs_from_windows.h"
+#include"sci_dll_functions.h"
 
 #define LIBRARY_FILE_NAME_RELEASE   "sc_optic.dll"
 #define LIBRARY_FILE_NAME_DEBUG     "sc_optic_d.dll"
 
+typedef char* LPSTR;
+typedef const char* LPCSTR;
+typedef void* HMODULE;
+
+#define     SC_OK                                        1
+#define		SC_ERROR									-1
+
+// SCI related error codes
+
+// the scanner card dll interface wasn't initialized or the initialization wasn't successful
+#define		SC_ERROR_NOT_INITIALIZED                    (SC_ERROR - 0x301)
+
+#define SCI_LASER_YAG 0x0001
+#define SCI_LASER_CO2 0x0002
+
+
 class SCModule
 {
+    bool mbIsDeviceInitialized;
+    bool mbAreSettingsLoaded;
+
+    QString mCarrFile;
+    QString mSettingsFile;
+
+    long mLaserMode;
+    long mLaserPort;
+
+    void showMessageBox(QString qMsg);
+
     public:
-        virtual ~SCModule();
+        SCModule();
+        SCModule(const SCModule& loader);
+        ~SCModule();
         SCModule* initInstance();
 
         bool loadLibrary(const QString& path = QString());
         bool checkFunction(void *pfunc, const QString func_name);
-        void initializeDevice();
+        bool initializeDevice();
 
         // DLL function mapping
         long SCSciSetCardType(char *card_type);
@@ -87,10 +120,6 @@ class SCModule
         long SCSciGetIdentString(char *Ident);
         long SCSciGetDeviceMapLaserPort(long *Port);
         long SCSciSetDeviceMapLaserPort(long Port);
-
-    private:
-        SCModule();
-        SCModule(const SCModule& loader);
-}
+};
 
 #endif // SCMODULE_H

@@ -1,5 +1,8 @@
 #include "sci_dll_functions.h"
 
+void* GetProcAddress( HMODULE,LPCSTR)
+{}
+
 /*** DLL interface defintitions *****************************************/
 
 dll_sc_sci_set_card_type              sc_sci_set_card_type;
@@ -51,7 +54,7 @@ dll_sc_sci_set_continuous_mode        sc_sci_set_continuous_mode;
 dll_sc_sci_get_continuous_mode        sc_sci_get_continuous_mode;
 dll_sc_sci_set_external_trigger       sc_sci_set_external_trigger;
 dll_sc_sci_get_external_trigger       sc_sci_get_external_trigger;
-dll_sc_sci_set_message_window         sc_sci_set_message_window;              
+dll_sc_sci_set_message_window         sc_sci_set_message_window;
 dll_sc_sci_set_axis_state		      sc_sci_set_axis_state;
 dll_sc_sci_get_axis_state			  sc_sci_get_axis_state;
 dll_sc_sci_load_settings              sc_sci_load_settings;
@@ -78,9 +81,9 @@ dll_sc_sci_set_device_map_laser_port  sc_sci_set_device_map_laser_port;
 void sci_load_dll_functions(HMODULE sc_optic_dll_handle)
 {
     sc_sci_set_card_type	 =		  (dll_sc_sci_set_card_type)			 GetProcAddress(sc_optic_dll_handle,"ScSCISetCardType");
-	sc_sci_init_interface    =        (dll_sc_sci_init_interface)            GetProcAddress(sc_optic_dll_handle,"ScSCIInitInterface");
-	sc_sci_init_optic        =        (dll_sc_sci_init_optic)                GetProcAddress(sc_optic_dll_handle,"ScSCIInitOptic");
-	sc_sci_exit  =                    (dll_sc_sci_exit)                      GetProcAddress(sc_optic_dll_handle,"ScSCIExit");
+    sc_sci_init_interface    =        (dll_sc_sci_init_interface)            GetProcAddress(sc_optic_dll_handle,"ScSCIInitInterface");
+    sc_sci_init_optic        =        (dll_sc_sci_init_optic)                GetProcAddress(sc_optic_dll_handle,"ScSCIInitOptic");
+    sc_sci_exit  =                    (dll_sc_sci_exit)                      GetProcAddress(sc_optic_dll_handle,"ScSCIExit");
     sc_sci_set_working_area=          (dll_sc_sci_set_working_area)          GetProcAddress(sc_optic_dll_handle,"ScSCISetWorkingArea");
     sc_sci_get_working_area=          (dll_sc_sci_get_working_area)          GetProcAddress(sc_optic_dll_handle,"ScSCIGetWorkingArea");
     sc_sci_set_field=                 (dll_sc_sci_set_field)                 GetProcAddress(sc_optic_dll_handle,"ScSCISetField");
@@ -94,10 +97,10 @@ void sci_load_dll_functions(HMODULE sc_optic_dll_handle)
     sc_sci_set_gain=                  (dll_sc_sci_set_gain)                  GetProcAddress(sc_optic_dll_handle,"ScSCISetGain");
     sc_sci_set_home_position=         (dll_sc_sci_set_home_position)         GetProcAddress(sc_optic_dll_handle,"ScSCISetHomePosition");
     sc_sci_set_home_jump=             (dll_sc_sci_set_home_jump)             GetProcAddress(sc_optic_dll_handle,"ScSCISetHomeJump");
-	sc_sci_set_move_laser_state=      (dll_sc_sci_set_move_laser_state)      GetProcAddress(sc_optic_dll_handle,"ScSCISetMoveLaserState");
-	sc_sci_stream_info         =      (dll_sc_sci_stream_info)               GetProcAddress(sc_optic_dll_handle,"ScSCIStreamInfo");
-	sc_sci_flush               =      (dll_sc_sci_flush)                     GetProcAddress(sc_optic_dll_handle,"ScSCIFlush");
-	sc_sci_enable_head_select  =      (dll_sc_sci_enable_head_select)        GetProcAddress(sc_optic_dll_handle,"ScSCIEnableHeadSelect");
+    sc_sci_set_move_laser_state=      (dll_sc_sci_set_move_laser_state)      GetProcAddress(sc_optic_dll_handle,"ScSCISetMoveLaserState");
+    sc_sci_stream_info         =      (dll_sc_sci_stream_info)               GetProcAddress(sc_optic_dll_handle,"ScSCIStreamInfo");
+    sc_sci_flush               =      (dll_sc_sci_flush)                     GetProcAddress(sc_optic_dll_handle,"ScSCIFlush");
+    sc_sci_enable_head_select  =      (dll_sc_sci_enable_head_select)        GetProcAddress(sc_optic_dll_handle,"ScSCIEnableHeadSelect");
     sc_sci_set_current_head=          (dll_sc_sci_set_current_head)          GetProcAddress(sc_optic_dll_handle,"ScSCISetCurrentHead");
     sc_sci_set_enable_head=           (dll_sc_sci_set_enable_head)           GetProcAddress(sc_optic_dll_handle,"ScSCISetEnableHead");
     sc_sci_set_head_count=            (dll_sc_sci_set_head_count)            GetProcAddress(sc_optic_dll_handle,"ScSCISetHeadCount");
@@ -111,24 +114,24 @@ void sci_load_dll_functions(HMODULE sc_optic_dll_handle)
     sc_sci_get_device_data=           (dll_sc_sci_get_device_data)           GetProcAddress(sc_optic_dll_handle,"ScSCIGetDeviceData");
     sc_sci_set_device_data=           (dll_sc_sci_set_device_data)           GetProcAddress(sc_optic_dll_handle,"ScSCISetDeviceData");
     sc_sci_set_execute=               (dll_sc_sci_set_execute)               GetProcAddress(sc_optic_dll_handle,"ScSCISetExecute");
-	sc_sci_get_execute=               (dll_sc_sci_get_execute)               GetProcAddress(sc_optic_dll_handle,"ScSCIGetExecute");
-	sc_sci_get_move_laser_state=      (dll_sc_sci_get_move_laser_state)      GetProcAddress(sc_optic_dll_handle,"ScSCIGetMoveLaserState");
+    sc_sci_get_execute=               (dll_sc_sci_get_execute)               GetProcAddress(sc_optic_dll_handle,"ScSCIGetExecute");
+    sc_sci_get_move_laser_state=      (dll_sc_sci_get_move_laser_state)      GetProcAddress(sc_optic_dll_handle,"ScSCIGetMoveLaserState");
     sc_sci_set_style_set=             (dll_sc_sci_set_style_set)             GetProcAddress(sc_optic_dll_handle,"ScSCISetStyleSet");
     sc_sci_get_style_set=             (dll_sc_sci_get_style_set)             GetProcAddress(sc_optic_dll_handle,"ScSCIGetStyleSet");
-	sc_sci_set_device_delay_d=        (dll_sc_sci_set_device_delay_d)        GetProcAddress(sc_optic_dll_handle,"ScSCISetDeviceDelayD");
-	sc_sci_get_device_delay_d=        (dll_sc_sci_get_device_delay_d)        GetProcAddress(sc_optic_dll_handle,"ScSCIGetDeviceDelayD");
+    sc_sci_set_device_delay_d=        (dll_sc_sci_set_device_delay_d)        GetProcAddress(sc_optic_dll_handle,"ScSCISetDeviceDelayD");
+    sc_sci_get_device_delay_d=        (dll_sc_sci_get_device_delay_d)        GetProcAddress(sc_optic_dll_handle,"ScSCIGetDeviceDelayD");
     sc_sci_set_device_port_value=     (dll_sc_sci_set_device_port_value)     GetProcAddress(sc_optic_dll_handle,"ScSCISetDevicePortValue");
-	sc_sci_get_device_port_value=     (dll_sc_sci_get_device_port_value)     GetProcAddress(sc_optic_dll_handle,"ScSCIGetDevicePortValue");
-	sc_sci_reset_external_trigger_count=(dll_sc_sci_reset_external_trigger_count)GetProcAddress(sc_optic_dll_handle,"ScSCIResetExternalTriggerCount");
+    sc_sci_get_device_port_value=     (dll_sc_sci_get_device_port_value)     GetProcAddress(sc_optic_dll_handle,"ScSCIGetDevicePortValue");
+    sc_sci_reset_external_trigger_count=(dll_sc_sci_reset_external_trigger_count)GetProcAddress(sc_optic_dll_handle,"ScSCIResetExternalTriggerCount");
     sc_sci_get_external_trigger_count=(dll_sc_sci_get_external_trigger_count)GetProcAddress(sc_optic_dll_handle,"ScSCIGetExternalTriggerCount");
     sc_sci_max_external_trigger_count=(dll_sc_sci_max_external_trigger_count)GetProcAddress(sc_optic_dll_handle,"ScSCIMaxExternalTriggerCount");
     sc_sci_set_continuous_mode=       (dll_sc_sci_set_continuous_mode)       GetProcAddress(sc_optic_dll_handle,"ScSCISetContinuousMode");
-	sc_sci_get_continuous_mode=       (dll_sc_sci_get_continuous_mode)       GetProcAddress(sc_optic_dll_handle,"ScSCIGetContinuousMode");
-	sc_sci_set_external_trigger=      (dll_sc_sci_set_external_trigger)      GetProcAddress(sc_optic_dll_handle,"ScSCISetExternalTrigger");
+    sc_sci_get_continuous_mode=       (dll_sc_sci_get_continuous_mode)       GetProcAddress(sc_optic_dll_handle,"ScSCIGetContinuousMode");
+    sc_sci_set_external_trigger=      (dll_sc_sci_set_external_trigger)      GetProcAddress(sc_optic_dll_handle,"ScSCISetExternalTrigger");
     sc_sci_get_external_trigger=      (dll_sc_sci_get_external_trigger)      GetProcAddress(sc_optic_dll_handle,"ScSCIGetExternalTrigger");
     sc_sci_set_message_window=        (dll_sc_sci_set_message_window)        GetProcAddress(sc_optic_dll_handle,"ScSCISetMessageWindow");
-	sc_sci_set_axis_state=			  (dll_sc_sci_set_axis_state)			 GetProcAddress(sc_optic_dll_handle,"ScSCISetAxisState");
-	sc_sci_get_axis_state=			  (dll_sc_sci_get_axis_state)			 GetProcAddress(sc_optic_dll_handle,"ScSCIGetAxisState");
+    sc_sci_set_axis_state=			  (dll_sc_sci_set_axis_state)			 GetProcAddress(sc_optic_dll_handle,"ScSCISetAxisState");
+    sc_sci_get_axis_state=			  (dll_sc_sci_get_axis_state)			 GetProcAddress(sc_optic_dll_handle,"ScSCIGetAxisState");
     sc_sci_load_settings=             (dll_sc_sci_load_settings)             GetProcAddress(sc_optic_dll_handle,"ScSCILoadSettings");
     sc_sci_save_settings=             (dll_sc_sci_save_settings)             GetProcAddress(sc_optic_dll_handle,"ScSCISaveSettings");
     sc_sci_edit_settings=             (dll_sc_sci_edit_settings)             GetProcAddress(sc_optic_dll_handle,"ScSCIEditSettings");
@@ -139,8 +142,8 @@ void sci_load_dll_functions(HMODULE sc_optic_dll_handle)
     sc_sci_device_pixel_line=         (dll_sc_sci_device_pixel_line)         GetProcAddress(sc_optic_dll_handle,"ScSCIDevicePixelLine");
     sc_sci_set_speed=                 (dll_sc_sci_set_speed)                 GetProcAddress(sc_optic_dll_handle,"ScSCISetSpeed");
     sc_sci_get_speed=                 (dll_sc_sci_get_speed)                 GetProcAddress(sc_optic_dll_handle,"ScSCIGetSpeed");
-    sc_sci_update_device_style=       (dll_sc_sci_update_device_style)       GetProcAddress(sc_optic_dll_handle,"ScSCIUpdateDeviceStyle");    
-    sc_sci_get_interface_version=     (dll_sc_sci_get_interface_version)     GetProcAddress(sc_optic_dll_handle,"ScSCIGetInterfaceVersion");    
+    sc_sci_update_device_style=       (dll_sc_sci_update_device_style)       GetProcAddress(sc_optic_dll_handle,"ScSCIUpdateDeviceStyle");
+    sc_sci_get_interface_version=     (dll_sc_sci_get_interface_version)     GetProcAddress(sc_optic_dll_handle,"ScSCIGetInterfaceVersion");
     sc_sci_get_debug_mode=            (dll_sc_sci_get_debug_mode)            GetProcAddress(sc_optic_dll_handle,"ScSCIGetDebugMode");
     sc_sci_set_debug_mode=            (dll_sc_sci_set_debug_mode)            GetProcAddress(sc_optic_dll_handle,"ScSCISetDebugMode");
     sc_sci_is_exposure_end=           (dll_sc_sci_is_exposure_end)           GetProcAddress(sc_optic_dll_handle,"ScSCIIsExposureEnd");
