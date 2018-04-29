@@ -1,8 +1,18 @@
 #include "picomodule.h"
+#include <QDebug>
 
 PicoModule::PicoModule()
+    :   mLibrary()
 {
     bIsPicoModuleAlive = false;
+
+    double test = 0;
+    if(!readVoltage(&test)){
+        // bla bla
+        qDebug() << "Cannot read voltage!";
+    }else{
+        qDebug() << "Read value: " << test;
+    }
 }
 PicoModule::~PicoModule()
 {
@@ -32,4 +42,12 @@ bool PicoModule::heartbeat()
 bool PicoModule::isPicoModuleAlive()
 {
     return bIsPicoModuleAlive;
+}
+
+bool PicoModule::readVoltage(double* output)
+{
+    if(mLibrary.isInitialized())
+        return mLibrary.readVoltage(output);
+
+    return false;
 }

@@ -58,6 +58,7 @@ class PicoTestModule
 
         // returns true if read was successful, false otherwise
         bool readVoltage(double* output);
+        bool isInitialized()const;
 
     protected:
         void initialize();

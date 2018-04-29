@@ -18,7 +18,10 @@ public:
     bool heartbeat();
     bool isPicoModuleAlive();
 
-private:\
+public slots:
+    bool readVoltage(double* output);
+
+private:
     PicoTestModule mLibrary;
 };
 

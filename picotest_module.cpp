@@ -77,14 +77,6 @@ PicoTestModule::PicoTestModule()
             status = SetAttributeUsb(mInstrUsbtmc, VI_ATTR_TMO_VALUE, mTimeout);
         }
     }
-
-    double test = 0;
-    if(!readVoltage(&test)){
-        // bla bla
-        qDebug() << "Cannot read voltage!";
-    }else{
-        qDebug() << "Read value: " << test;
-    }
 }
 
 PicoTestModule::~PicoTestModule()
@@ -256,6 +248,12 @@ PicoTestModule::readVoltage(double* output)
         return false;
 
     return true;
+}
+
+bool
+PicoTestModule::isInitialized()const
+{
+    return mInitialized;
 }
 
 void
