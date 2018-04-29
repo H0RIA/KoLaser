@@ -2,8 +2,13 @@
 #define PICOTEST_MODULE_H
 
 #include "./visa.h"
-#include "windows.h"
+#include <Qt>
 
+#ifndef Q_OS_MACOS
+#include "windows.h"
+#endif
+
+#ifndef Q_OS_MACOS
 typedef signed long (__stdcall  *dll_PviOpenDefaultRM_usb)	(unsigned long *vi);
 typedef signed long (__stdcall  *dll_PviFindRsrc_usb)		(unsigned long sesn, char *expr, unsigned long *vi, unsigned long *retCnt, char far desc[]);
 typedef signed long (__stdcall  *dll_PviOpen_usb)			(unsigned long sesn, char *name, unsigned long mode, unsigned long timeout, unsigned long *vi);
@@ -71,5 +76,5 @@ class PicoTestModule
         char            mInstrDescriptor[PICO_INSTR_DESCRIPTOR_SIZE];
         int             mTimeout;
 };
-
+#endif
 #endif // PICOTEST_MODULE_H

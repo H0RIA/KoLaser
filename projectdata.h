@@ -18,6 +18,7 @@ public:
 
 class Task
 {
+public:
     QString mOperationType;
     int mPutereDioda;
     int mViteza;

@@ -3,25 +3,36 @@
 #include <QDir>
 #include <QFileInfo>
 
-SCModule::SCModule()
+SCModule::SCModule(ProjectData* pProjectData)
     :   mLaserLib(nullptr)
-        ,mCarrFile("D:/laser/scaps/sam2d/usc1/GAPHEAD _ F160_CVI_1064_ANALOG.ucf")
-        ,mSettingsFile("D:/laser/scaps/sam2d/system/sc_light_settings.sam")
-        ,mLaserMode(0)
-        ,mLaserPort(0)
+    ,mCarrFile("D:/laser/scaps/sam2d/usc1/GAPHEAD _ F160_CVI_1064_ANALOG.ucf")
+    ,mSettingsFile("D:/laser/scaps/sam2d/system/sc_light_settings.sam")
+    ,mLaserMode(0)
+    ,mLaserPort(0)
 {
+    mpProjectData = pProjectData;
+
     mbIsDeviceInitialized = false;
     mLaserPort = scComStandardDeviceMapLaserToPort2;
 
     loadLibrary("C:/Users/user/Documents/GitHub/KoLaser/sc_optic.dll");
+
+    mpExecutionTimer = new QTimer(this);
+
+    connect(mpExecutionTimer,SIGNAL(timeout()),this,SLOT(checkExecution()));
 }
 SCModule::~SCModule()
 {
-
+    if(mpExecutionTimer)
+    {
+        delete mpExecutionTimer;
+        mpExecutionTimer = 0;
+    }
 }
 
 bool SCModule::loadLibrary(const QString &path)
 {
+#ifndef Q_OS_MACOS
     if(path.isEmpty())
         return false;
 
@@ -41,6 +52,8 @@ bool SCModule::loadLibrary(const QString &path)
     }
 
     return false;
+#endif
+    return true;
 }
 
 void SCModule::showMessageBox(QString qMsg)
@@ -57,17 +70,17 @@ bool SCModule::initializeDevice()
     result = SCSciGetInterfaceVersion(&interface_version);
     TREAT_RESULT("SCSciGetInterfaceVersion", result)
 
-        // activate the following lines if you do not want any message boxes to popup (for example correction file not found)
-        /*
-        long debug_mode = 0;
-        sc_sci_get_debug_mode(&debug_mode);
-        debug_mode |= 0x4;  // SC_ DEBUG_MODE_NO_OUTPUT
-        sc_sci_set_debug_mode(debug_mode);
-        */
+            // activate the following lines if you do not want any message boxes to popup (for example correction file not found)
+            /*
+                long debug_mode = 0;
+                sc_sci_get_debug_mode(&debug_mode);
+                debug_mode |= 0x4;  // SC_ DEBUG_MODE_NO_OUTPUT
+                sc_sci_set_debug_mode(debug_mode);
+                */
 
-        /* initialize the interface
-        */
-    result = SCSciInitInterface();
+            /* initialize the interface
+                */
+            result = SCSciInitInterface();
     if (result != SC_OK)
     {
         QString strError = QString("SCSciInitInterface returned %1").arg(result);
@@ -114,51 +127,51 @@ bool SCModule::initializeDevice()
     result = SCSciSetDeviceOperationMode(device_mode);
     TREAT_RESULT("SCSciSetDeviceOperationMode", result)
 
-    /* setup z lookup table
-    */
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexZCorrFieldSize, 200.0);
+            /* setup z lookup table
+            */
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexZCorrFieldSize, 200.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexDistanceMirrorsMM, 20.0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexDistanceMirrorsMM, 20.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexRadiusSecondMirrorMM, 400.0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexRadiusSecondMirrorMM, 400.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZNumControlPoints, 3);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZNumControlPoints, 3);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 0, 350.0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 0, 350.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 0, 32767);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 0, 32767);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 1, 400.0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 1, 400.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 1, 0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 1, 0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 2, 450.0);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZMMStart + 2, 450.0);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 2, -32768);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexLookupZDacStart + 2, -32768);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexZCorrFlags, 0x1);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscOffset3DCorrtableLockup | scComStandardDeviceMiscIndexZCorrFlags, 0x1);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscEnableSendZCorr, 1);
+            result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscEnableSendZCorr, 1);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result)
 
-    /* initialize the device
-    */
-    result = SCSciInitOptic();
+            /* initialize the device
+            */
+            result = SCSciInitOptic();
     if (result != SC_OK)
     {
-       this->showMessageBox("Initialization failed!");
-       return false;
+        this->showMessageBox("Initialization failed!");
+        return false;
     }
 
     /* set field and working area
@@ -166,61 +179,61 @@ bool SCModule::initializeDevice()
     result = SCSciSetField(-100, -100, 100, 100);
     TREAT_RESULT("SCSciSetField", result)
 
-    result = SCSciSetWorkingArea(-100, -100, 100, 100);
+            result = SCSciSetWorkingArea(-100, -100, 100, 100);
     TREAT_RESULT("SCSciSetWorkingArea", result)
 
-    /* set correction offset and gain
-    */
-    result = SCSciSetOffset(0, 0);
+            /* set correction offset and gain
+            */
+            result = SCSciSetOffset(0, 0);
     TREAT_RESULT("SCSciSetOffset", result)
 
-    result = SCSciSetGain(1, 1);
+            result = SCSciSetGain(1, 1);
     TREAT_RESULT("SCSciSetGain", result)
 
-    /* specify home position and enable home jump (if necessary)
-    */
-    result = SCSciSetHomePosition(0, 0);
+            /* specify home position and enable home jump (if necessary)
+            */
+            result = SCSciSetHomePosition(0, 0);
     TREAT_RESULT("SCSciSetHomePosition", result)
 
-    result = SCSciSetHomeJump(1);
+            result = SCSciSetHomeJump(1);
     TREAT_RESULT("SCSciSetHomeJump", result)
 
-    /* no multihead
-    */
-    result = SCSciSetEnableHead(0);
+            /* no multihead
+            */
+            result = SCSciSetEnableHead(0);
     TREAT_RESULT("SCSciSetEnableHead", result)
 
-    result = SCSciSetCurrentHead(0);
+            result = SCSciSetCurrentHead(0);
     TREAT_RESULT("SCSciSetCurrentHead", result)
 
-    /* enable the head
-    */
-    result = SCSciSetEnableHead(1);
+            /* enable the head
+            */
+            result = SCSciSetEnableHead(1);
     TREAT_RESULT("SCSciSetEnableHead", result)
 
-    /* set laserport
-    */
-    result = SCSciSetDeviceMapLaserPort(mLaserPort);
+            /* set laserport
+            */
+            result = SCSciSetDeviceMapLaserPort(mLaserPort);
     TREAT_RESULT("SCSciSetDeviceMapLaserPort", result)
 
-    /* set axis state
-    */
-    long axisState = 0;
+            /* set axis state
+            */
+            long axisState = 0;
     // axis_state |= scComAxisStateInvertX;  // enable this line for inverting x axis
     // axis_state |= scComAxisStateInvertY;	 // enable this line for inverting y axis
     // axis_state |= scComAxisStateFlipXY;	 // enable this line for flip xy
     result = SCSciSetAxisState(axisState);
     TREAT_RESULT("SCSciSetAxisState", result)
 
-    /* set defined state, no execution, laser off
-    */
-    result = SCSciSetExecute(0);
+            /* set defined state, no execution, laser off
+            */
+            result = SCSciSetExecute(0);
     TREAT_RESULT("SCSciSetExecute", result)
 
-    result = SCSciSetMoveLaserState(0);
+            result = SCSciSetMoveLaserState(0);
     TREAT_RESULT("SCSciSetMoveLaserState", result)
 
-    mbIsDeviceInitialized = true;
+            mbIsDeviceInitialized = true;
 
     if(mbAreSettingsLoaded)
     {
@@ -234,6 +247,208 @@ bool SCModule::initializeDevice()
     return true;
 }
 
+bool SCModule::beginMarking()
+{
+    if(mbIsDeviceInitialized)
+    {
+        long power, pulseLength;
+        long device_flags;
+
+        long result = 0;
+
+        /* set style set
+        */
+        result = SCSciSetStyleSet(1);
+        TREAT_RESULT("SCSciSetStyleSet",result);
+
+        // configure delays (as on the pen settings page)
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay, 50);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDPolyDelay, 20);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDJumpDelay, 400);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        // set the speed for jumping, this value can also be modified within the stream
+        result = SCSciSetDeviceSpeed(scComStandardDeviceStyleIDJumpSpeedFU, 7600);
+        TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+        // enable the output port
+        result = SCSciSetDeviceEnableFlags(scComStandardDeviceEnableFlagGroupStyle,&device_flags);
+        TREAT_RESULT("SCSciSetDeviceEnableFlags",result);
+
+        device_flags|=scComStandardDeviceStyleFlagEnablePortLaser;
+
+        result = SCSciSetDeviceEnableFlags(scComStandardDeviceEnableFlagGroupStyle,device_flags);
+        TREAT_RESULT("SCSciSetDeviceEnableFlags",result);
+
+        // calculate and set power and frequency values for YAG laser
+        result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,mpProjectData->getTaskList()->at(0)->mPutereDioda);
+        TREAT_RESULT("SCSciSetDevicePortValue",result);
+
+        result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/mpProjectData->getTaskList()->at(0)->mFrecventaQ*1e+6);
+        TREAT_RESULT("SCSciSetDeviceTimer",result);
+
+        result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchLength,10); //TODO: ???????????/
+        TREAT_RESULT("SCSciSetDeviceTimer",result);
+
+        result = SCSciSetContinuousMode(true);
+        TREAT_RESULT("SCSciSetContinuousMode",result);
+
+        result = SCSciSetExternalTrigger(true);
+        TREAT_RESULT("SCSciSetExternalTrigger",result);
+
+        result = SCSciSetExecute(true);
+        TREAT_RESULT("SCSciSetExecute",result);
+
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdStart,-1,scComControlStreamInfoSequenceIdJob);
+        TREAT_RESULT("SCSciStreamInfo",result);
+    }
+    else
+    {
+        this->showMessageBox("ScModule Not initialized!!!");
+    }
+}
+
+bool SCModule::startMarking(QList<Punct *> *pPointList)
+{
+    long result = 0;
+    double x,y;
+
+    this->beginMarking();
+
+    double mark_speed = 50;    // not relevant
+    double jump_speed = 40000;    // relevant, unit in mm/s
+    // lets assume 50 kHz, we want to give two pulses each
+    double drill_time = 41; // in us
+
+    result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, mark_speed);
+    TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+    result = SCSciSetDeviceSpeed(scComStandardDeviceStyleIDJumpSpeedFU, jump_speed);
+    TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOnDelay,1);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOffDelay,drill_time);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDJumpDelay, 10);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay,drill_time);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    long left_to_right = 1;
+    // in total we mark 10000 points
+    for (y=-30.0; y<=30.0; y+=1)
+    {
+        {
+            // alternate line direction
+            if(left_to_right)
+            {
+                for (x=-30.0; x<=30.0; x+=1)
+                {
+                    result = SCSciSetMoveLaserState(0);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+                    result = SCSciMoveAbs(x,y);
+                    TREAT_RESULT("SCSciMoveAbs",result);
+
+                    result = SCSciSetMoveLaserState(1);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+                    result = SCSciMoveAbs(x,y);
+                    TREAT_RESULT("SCSciMoveAbs",result);
+
+                    result = SCSciSetMoveLaserState(0);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+                }
+                left_to_right = 0;
+            }
+            else
+            {
+                for (x=30.0; x>=-30.0; x-=1)
+                {
+                    result = SCSciSetMoveLaserState(0);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+                    result = SCSciMoveAbs(x,y);
+                    TREAT_RESULT("SCSciMoveAbs",result);
+
+                    result = SCSciSetMoveLaserState(1);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+                    result = SCSciMoveAbs(x,y);
+                    TREAT_RESULT("SCSciMoveAbs",result);
+
+                    result = SCSciSetMoveLaserState(0);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+                }
+                left_to_right = 1;
+            }
+        }
+    }
+
+    result = SCSciSetMoveLaserState(0);
+    TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+    result = SCSciMoveAbs(0.0,0.0);
+    TREAT_RESULT("SCSciMoveAbs",result);
+}
+
+bool SCModule::endMarking()
+{
+    long result = 0;
+    /* signal stream start
+        */
+    result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdMain);
+    TREAT_RESULT("SCSciStreamInfo",result);
+
+    result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdJob);
+    TREAT_RESULT("SCSciStreamInfo",result);
+    /* if non continuous mode, start execution of the job now
+        */
+    result = SCSciSetExecute(1);
+    TREAT_RESULT("SCSciSetExecute",result);
+
+    /* flush remaining stream data and block until all commands have been executed -
+           will return immediately if set for external trigger or non continuous mode
+        */
+    result = SCSciFlush();
+    TREAT_RESULT("SCSciFlush",result);
+
+    // check if external trigger is set
+    long isExternalTrigger;
+    result = SCSciGetExternalTrigger(&isExternalTrigger);
+
+    long isContinuousMode;
+    result = SCSciGetContinuousMode(&isContinuousMode);
+
+    if (!isContinuousMode && isExternalTrigger)
+    {
+        mpExecutionTimer->start(100);
+    }
+}
+
+void SCModule::checkExecution()
+{
+    long isExecuting = true;
+    long result = 0;
+
+    result = SCSciGetExecute(&isExecuting);
+    TREAT_RESULT("SCSciGetExecute",result);
+
+    if(!isExecuting)
+    {
+        result = SCSciSetExecute(0);
+        TREAT_RESULT("SCSciSetExecute",result);
+    }
+
+}
 /////////
 
 long SCModule::SCSciSetCardType(char *card_type){ return sc_sci_set_card_type(card_type); }

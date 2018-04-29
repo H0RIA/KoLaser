@@ -26,10 +26,10 @@ MainWindow::MainWindow(QWidget *parent) :
     bIsAligning = false;
 
     mpPainter = new Painter();
-    mpScModule = new SCModule();
+    mpProjectData = new ProjectData();
+    mpScModule = new SCModule(mpProjectData);
     mpPicoModule = new PicoModule();
     mpControlBoard = new ControlBoardModule(ui->portNameCBox);
-    mpProjectData = new ProjectData();
 
     mpPicoTimer = new QTimer(this);
     mpCBTimer = new QTimer(this);

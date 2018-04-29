@@ -1,6 +1,7 @@
 #include "picotest_module.h"
 #include <QDebug>
 
+#ifndef Q_OS_MACOS
 dll_PviOpenDefaultRM_usb     PviOpenDefaultRM_usb;
 dll_PviFindRsrc_usb          PviFindRsrc_usb;
 dll_PviOpen_usb              PviOpen_usb;
@@ -278,3 +279,4 @@ void PicoTestModule::test()
     status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 13, &nWritten);
     free(pStrout);
 }
+#endif

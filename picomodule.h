@@ -3,7 +3,10 @@
 
 #include<QObject>
 #include "picotest_module.h"
-
+//-----------------------------------
+class PicoTestModule
+{};
+//-----------------------------------
 class PicoModule : public QObject
 {
     Q_OBJECT
@@ -18,7 +21,7 @@ public:
     bool heartbeat();
     bool isPicoModuleAlive();
 
-private:\
+private:
     PicoTestModule mLibrary;
 };
 
