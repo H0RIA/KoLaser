@@ -3,6 +3,7 @@
 
 #include "./visa.h"
 #include "windows.h"
+#include <QMap>
 
 typedef signed long (__stdcall  *dll_PviOpenDefaultRM_usb)	(unsigned long *vi);
 typedef signed long (__stdcall  *dll_PviFindRsrc_usb)		(unsigned long sesn, char *expr, unsigned long *vi, unsigned long *retCnt, char far desc[]);
@@ -22,7 +23,8 @@ extern dll_PviSetAttribute_usb      PviSetAttribute_usb;
 
 #define PICO_BUFFER_SIZE            256
 #define PICO_INSTR_DESCRIPTOR_SIZE  256
-#define PICO_OK                     0L
+#define COMMAND_BUFFER_SIZE         64
+#define RESPONSE_BUFFER_SIZE        64
 
 class PicoTestModule
 {
@@ -54,12 +56,15 @@ class PicoTestModule
                              unsigned long viAttr,
                              unsigned long attrstat);
 
+        // returns true if read was successful, false otherwise
+        bool readVoltage(double* output);
+
     protected:
         void initialize();
 
     private:
         PicoTestModule(const PicoTestModule& ptm) = delete;
-        void test();
+        void readIntoBuffer(BYTE* viBuffer, int count);
 
     protected:
         HMODULE mPicoLib;
@@ -70,6 +75,7 @@ class PicoTestModule
         char            mBuffer[PICO_BUFFER_SIZE];
         char            mInstrDescriptor[PICO_INSTR_DESCRIPTOR_SIZE];
         int             mTimeout;
+        bool            mInitialized;
 };
 
 #endif // PICOTEST_MODULE_H

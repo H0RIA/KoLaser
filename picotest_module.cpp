@@ -41,30 +41,49 @@ PicoTestModule::PicoTestModule()
         ,mBuffer()
         ,mInstrDescriptor()
         ,mTimeout(7000)
+        ,mInitialized(false)
 {
     initialize();
 
     long status = OpenDefaultRMUsb(&mDefaultRMUsbtmc);
-    if(status < PICO_OK){
+    if(status < VI_SUCCESS){
         CloseUsb(mDefaultRMUsbtmc);
         mDefaultRMUsbtmc = 0;
     }else{
         unsigned long m_findList_usbtmc;
         unsigned long m_nCount;
+        mInitialized = true;
 
         status = FindRsrcUsb(mDefaultRMUsbtmc,
                              "USB[0-9]*::0x164E::0x0DAD::?*INSTR",
                              &m_findList_usbtmc,
                              &m_nCount,
                              mInstrDescriptor);
-        if(status < PICO_OK){
-            // bla bla
-        }else{
+        if(status < VI_SUCCESS){
+            status = FindRsrcUsb(mDefaultRMUsbtmc,
+                                 "USB[0-9]*::5710::3501::?*INSTR",
+                                 &m_findList_usbtmc,
+                                 &m_nCount,
+                                 mInstrDescriptor);
+            if(status < VI_SUCCESS){
+                CloseUsb(mDefaultRMUsbtmc);
+                mDefaultRMUsbtmc = 0;
+                mInitialized = false;
+            }
+        }
+
+        if(mInitialized){
             status = OpenUsb(mDefaultRMUsbtmc, mInstrDescriptor, 0, 0, &mInstrUsbtmc);
             status = SetAttributeUsb(mInstrUsbtmc, VI_ATTR_TMO_VALUE, mTimeout);
-
-            test();
         }
+    }
+
+    double test = 0;
+    if(!readVoltage(&test)){
+        // bla bla
+        qDebug() << "Cannot read voltage!";
+    }else{
+        qDebug() << "Read value: " << test;
     }
 }
 
@@ -171,6 +190,74 @@ PicoTestModule::SetAttributeUsb(unsigned long vi,
     return PviSetAttribute_usb(vi, viAttr, attrstat);
 }
 
+bool
+PicoTestModule::readVoltage(double* output)
+{
+    if(mInitialized == false)
+        return false;
+
+    *output = 0;
+
+    ViStatus    status = VI_SUCCESS;
+    ULONG       nWritten = 0;
+    ULONG       nRead = 0;
+    BYTE        outputBuffer[RESPONSE_BUFFER_SIZE];
+    char        commandBuffer[COMMAND_BUFFER_SIZE];
+
+    memset(commandBuffer, 0, COMMAND_BUFFER_SIZE);
+    memset(outputBuffer, 0, RESPONSE_BUFFER_SIZE);
+
+    strcpy(commandBuffer, "*idn?");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char*)commandBuffer, strlen(commandBuffer) + 1, &nWritten);
+    Sleep(30);
+    if (status != VI_SUCCESS)
+        return false;
+
+    Sleep(500);
+    status = ReadUsb(mInstrUsbtmc, outputBuffer, RESPONSE_BUFFER_SIZE, &nRead);
+    if(status != VI_SUCCESS)
+        return false;
+
+    readIntoBuffer(outputBuffer, nRead);
+
+    // Reset the multimeter
+    strcpy(commandBuffer, "*RST");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char*)commandBuffer, strlen(commandBuffer) + 1, &nWritten);
+    if(status != VI_SUCCESS)
+        return false;
+
+    Sleep(30);
+
+    // Clear the errors
+    strcpy(commandBuffer, "*CLS");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char*)commandBuffer, strlen(commandBuffer) + 1, &nWritten);
+    if(status != VI_SUCCESS)
+        return false;
+
+    Sleep(500);
+
+    strcpy(commandBuffer, "MEAS:VOLT:DC? 10,0.00001");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char*)commandBuffer, strlen(commandBuffer) + 1, &nWritten);
+    if(status != VI_SUCCESS)
+        return false;
+
+    Sleep(500);
+
+    status = ReadUsb(mInstrUsbtmc, outputBuffer, RESPONSE_BUFFER_SIZE, &nRead);
+    if(status != VI_SUCCESS)
+        return false;
+
+    readIntoBuffer(outputBuffer, nRead);
+    *output = atof(mBuffer);
+
+    strcpy(commandBuffer, "system:local");
+    status = WriteUsb(mInstrUsbtmc, (unsigned char*)commandBuffer, strlen(commandBuffer) + 1, &nWritten);
+    if(status != VI_SUCCESS)
+        return false;
+
+    return true;
+}
+
 void
 PicoTestModule::initialize()
 {
@@ -181,100 +268,24 @@ PicoTestModule::initialize()
         return;
     }else{
         pico_load_dll_functions(mPicoLib);
-
     }
 
     memset(mBuffer, 0, PICO_BUFFER_SIZE);
     memset(mInstrDescriptor, 0, PICO_INSTR_DESCRIPTOR_SIZE);
 }
 
-void PicoTestModule::test()
+void
+PicoTestModule::readIntoBuffer(BYTE* viBuffer, int count)
 {
-    ULONG       nWritten;
-    ULONG       nRead = 0;
-    int         len = 64;
-    char        *pStrout = nullptr;
-    BYTE        pStrin[64];
-
-    pStrout = new char[len];
-    long status = 0;
-    ZeroMemory(pStrout, len);
-    strcpy(pStrout, "*idn?");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 6, &nWritten);
-    Sleep(30);
-    if (status != VI_SUCCESS)
-    {
-        qDebug("Write to device error.");
-        CloseUsb(mDefaultRMUsbtmc);
+    if(viBuffer == nullptr || count <= 0)
         return;
-    }
-    else
-    {
-        qDebug() << " output : *IDN?\n";
-    }
 
-    Sleep(1000);
-    // Read data from device
+    memset(mBuffer, 0, PICO_BUFFER_SIZE);
 
-    len = 64;
-    if (mPicoLib)
-    {
-        status = ReadUsb(mInstrUsbtmc, pStrin, len, &nRead);
-        if (nRead > 0)
-        {
-            for (len=0; len < (long) nRead; len++)
-            {
-                mBuffer[len] = pStrin[len];
-            }
-        }
-        mBuffer[nRead] = '\0';
-        qDebug() << QString(" input : %1\n\n").arg(mBuffer);
-    }
+    long index = 0;
+    for (index = 0; index < (long) count; index++)
+        mBuffer[index] = viBuffer[index];
 
-    // Set sample count to 1
-    strcpy(pStrout, "SAMP:COUN 1");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 12, &nWritten);
-    Sleep(30);
-
-    // Set configure Voltage AC, range 0.1A
-    strcpy(pStrout, "CONF:VOLT:AC 0.1,0.01");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 22, &nWritten);
-    Sleep(3000);
-
-    // Set configure frequency, range Auto
-    strcpy(pStrout, "CONF:FREQ");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 10, &nWritten);
-    Sleep(3000);
-
-    // Set configure Current DC, range 0.1A
-    strcpy(pStrout, "CONF:CURR:DC 1,0.01");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 20, &nWritten);
-    Sleep(3000);
-
-    // Set Voltage DC measure
-    strcpy(pStrout, "CONF:VOLT:DC 0.1,0.1");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 21, &nWritten);
-    Sleep(1000);
-
-    // Send read command
-    strcpy(pStrout, "READ?");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 6, &nWritten);
-    Sleep(30);
-    qDebug() << " output : READ?\n";
-
-    status = ReadUsb(mInstrUsbtmc, pStrin, 64, &nRead);
-    if (nRead > 0)
-    {
-        for (len=0; len < (long) nRead; len++)
-        {
-            mBuffer[len] = pStrin[len];
-        }
-    }
-    mBuffer[nRead] = '\0';
-    qDebug() << QString(" input : %1\n\n").arg(mBuffer);
-
-    // Set device to local mode
-    strcpy(pStrout, "system:local");
-    status = WriteUsb(mInstrUsbtmc, (unsigned char *)pStrout, 13, &nWritten);
-    free(pStrout);
+    mBuffer[index] = '\0';
+    qDebug() << mBuffer;
 }
