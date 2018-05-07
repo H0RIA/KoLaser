@@ -45,7 +45,8 @@ class SCModule : public QObject
 
     bool mbIsDeviceInitialized;
     bool mbAreSettingsLoaded;
-
+    bool mbShouldAlign;
+    
     HMODULE mLaserLib;
 
     QString mCarrFile;

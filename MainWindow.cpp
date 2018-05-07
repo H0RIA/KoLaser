@@ -25,9 +25,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bIsAligning = false;
 
-    mpPainter = new Painter();
-    mpProjectData = new ProjectData();
-    mpScModule = new SCModule(mpProjectData);
+    mpProjectData = 0;
+    mpPainter = 0;
+
+    mpScModule = new SCModule();
     mpPicoModule = new PicoModule();
     mpControlBoard = new ControlBoardModule(ui->portNameCBox);
 
@@ -54,23 +55,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->fileStatusLabel->setText("Status Fisier");
     ui->picoStatusLabel->setText("Status Multimetru ");
     ui->cbStatusLabel->setText("Status Control Board");
-
-    ui->graphLabel->setStyleSheet("QLabel { background-color : white; }");
-
-    ui->statusDisplayTextArea->append("123123123123123a");
-        ui->statusDisplayTextArea->append("123123123123b123");
-            ui->statusDisplayTextArea->append("123123123c123123");
-                ui->statusDisplayTextArea->append("123123d123123123");
-                    ui->statusDisplayTextArea->append("123e123123123123");
-                        ui->statusDisplayTextArea->append("123123123123123");
-                            ui->statusDisplayTextArea->append("123123123123123");
-                                ui->statusDisplayTextArea->append("123123123123123");
+    ui->uscStatusLabel->setText("Status USC");
 
     this->validProjectLoaded(false);
 
     setStatusOnButton(ui->fileStatusDisplay,Status::NOT_INITIALIZED);
     setStatusOnButton(ui->picoStatusDisplay,Status::NOT_INITIALIZED);
     setStatusOnButton(ui->cbStatusDisplay,Status::NOT_INITIALIZED);
+    setStatusOnButton(ui->uscDisplay,Status::NOT_INITIALIZED);
 
     ui->baudRateCBox->addItem("BaudRate:");
     ui->baudRateCBox->addItem("9600");
@@ -86,11 +78,21 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mpPicoTimer,SIGNAL(timeout()),this,SLOT(checkPicoHeartbeat()),Qt::AutoConnection);
     connect(mpCBTimer,SIGNAL(timeout()),this,SLOT(checkCbHeartbeat()),Qt::AutoConnection);
     connect(mpAlignTimer,SIGNAL(timeout()),SLOT(on_align_done()),Qt::AutoConnection);
+    connect(mpScModule,SIGNAL(printOutputToUser(QString)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
 }
 
 MainWindow::~MainWindow()
 {
-    delete mpPainter;
+    if(mpPainter != 0)
+    {
+        delete mpPainter;
+        mpPainter = 0;
+    }
+    if(mpProjectData != 0)
+    {
+        delete mpProjectData;
+        mpProjectData = 0;
+    }
     delete mpControlBoard;
     delete mpPicoModule;
     delete mpScModule;
@@ -102,24 +104,49 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_openFileBtn_released()
 {
+    long result;
     QString fileName = QFileDialog::getOpenFileName(this, tr("Deschidere Fisier Proiect"),
                                                     "C:/",
                                                     tr("*.*"));
     qDebug() << fileName;
-    this->readJson(fileName);
+
+    /////////////////
+    if(fileName.isEmpty())
+    {
+        //Test only. Make it non-empty.
+        fileName = "just_a_random_string";
+    }
+    /////////////////
+    if(!fileName.isEmpty())
+    {
+        result = this->generateProjectData(QJsonDocument::fromJson(readJson(fileName).toUtf8()));
+        if(!result)
+        {
+            qDebug() << "Failed to generate project data";
+        }
+        this->validProjectLoaded(result);
+        this->generateGraph();
+    }
+    else
+    {
+        qDebug() << "File name is empty!";
+    }
 }
-void MainWindow::readJson(QString jsonFilePath)
+QString MainWindow::readJson(QString jsonFilePath)
 {
-    QFile file;
-    file.setFileName(jsonFilePath);
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString json = file.readAll();
-    //QString json;
-    if(json.isNull())
+    QString json = "";
+//    QFile file;
+//    file.setFileName(jsonFilePath);
+//    file.open(QIODevice::ReadOnly | QIODevice::Text);
+//    QString json = file.readAll();
+    if(json.isEmpty())
     {
         //TEST ONLY
         json = "{"
                "\"Proiect\": \"Senzor Presiune 0 - 4 bari\","
+               "\"PuterePCB\" : \"0\","
+               "\"VitezaPCB\" : \"30000\","
+               "\"RutaPCB\" : [\"-9.500>10.000\", \"9.500>10.000\", \"9.500>-10.000\", \"-9.500>-10.000\", \"-9.500>10.000\", \"0.000>0.000\"],"
                 "\"Tasks\" :"
                    "[{"
                        "\"Tip_Task\" : \"INDEPENDENT\","
@@ -135,26 +162,90 @@ void MainWindow::readJson(QString jsonFilePath)
                "}";
     }
     //file.close();
-    qDebug()<<json;
 
-
-    this->generateProjectData(QJsonDocument::fromJson(json.toUtf8()));
+    ////////////////////////////////////
+    //TEST Only. Don't need to check twice
+    if(json.isEmpty())
+    {
+        throw "Something is really wrong.";
+    }
+    qDebug()<< "Loaded json:" << json;
+    ////////////////////////////////////
+    return json;
 }
-void MainWindow::generateProjectData(QJsonDocument doc)
+int MainWindow::generateProjectData(QJsonDocument doc)
 {
+    long result = 0;
     if (doc.isNull())
     {
-        qDebug() << "DOCUMENT IS EMPTY. JSON VALIDATION FAILED!!!";
+        qDebug() << "Json parse failed. Please check Json structure.";
+        return 0;
 //        QMessageBox::Information(this,tr("KoLaser"),tr("Invalid Json file!!"));
     }
+
+    if(mpProjectData != 0)
+    {
+        delete mpProjectData;
+    }
+    mpProjectData = new ProjectData();
+
     QJsonObject jsonObj = doc.object();
-    mpProjectData->setProjectName(jsonObj["Proiect"].toString());
-    ui->projectNameLineEdit->setText(mpProjectData->getProjectName());
+
+    if(jsonObj["Proiect"].isString())
+    {
+        QString sProjectName = jsonObj["Proiect"].toString();
+        mpProjectData->setProjectName(sProjectName);
+        ui->projectNameLineEdit->setText(sProjectName);
+    }
+    else
+    {
+        printOutputToUser("Invalid project name!");
+        return result;
+    }
+
+    if(!jsonObj["PuterePCB"].toString().isNull())
+    {
+        int nPcbPower = jsonObj["PuterePCB"].toString().toInt();
+        mpProjectData->setPcbLaserPower(nPcbPower);
+    }
+    else
+    {
+        printOutputToUser("Invalid PCB Power!");
+        return result;
+    }
+
+    if(!jsonObj["VitezaPCB"].toString().isNull())
+    {
+        int nPcbSpeed = jsonObj["VitezaPCB"].toString().toInt();
+        mpProjectData->setPcbLaserSpeed(nPcbSpeed);
+    }
+    else
+    {
+        printOutputToUser("Invalid PCB Speed!");
+        return result;
+    }
+
+    QJsonArray pcbRute = jsonObj["RutaPCB"].toArray();
+    for(int i = 0; i < pcbRute.count(); i++)
+    {
+        QStringList coordonates = pcbRute.at(i).toString().split(">");
+        if(coordonates.count() != 2)
+        {
+             this->printOutputToUser(QString("Punctul %1 din ruta PCB e definit gresit!").arg(i+1));
+            continue;
+        }
+        mpProjectData->getPCBRute()->append(new Punct("",coordonates[0].toDouble(),coordonates[1].toDouble()));
+    }
+
+    if(mpProjectData->getPCBRute()->count() == 0)
+    {
+        printOutputToUser("Ruta PCB invalida!");
+    }
 
     QJsonArray array = jsonObj["Tasks"].toArray();
     for(int i = 0; i < array.count(); i++)
     {
-       QList<Punct*> *pointList = new QList<Punct*>();
+       QList<Punct*> *pPointList = new QList<Punct*>();
        QJsonArray ruteArray = array.at(i)["Ruta"].toArray();
        for(int j = 0; j < ruteArray.count(); j++)
        {
@@ -165,39 +256,47 @@ void MainWindow::generateProjectData(QJsonDocument doc)
                op = pointStr[0];
                pointStr.remove(0,1);
            }
+           else
+           {
+               //Get the operation type from previous point. If no "previous point" has any operation, ever, abort.
+               if(pPointList->at(j-1) != 0)
+               {
+                   op = pPointList->at(j-1)->mOperatie;
+               }
+           }
            QStringList coordonates = pointStr.split(">");
-           pointList->append(new Punct(op,coordonates[0].toDouble(),coordonates[1].toDouble()));
+           if(coordonates.count() != 2)
+           {
+               printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1));
+               continue;
+           }
+           pPointList->append(new Punct(op,coordonates[0].toDouble(),coordonates[1].toDouble()));
        }
        Task *pTask= new Task(array.at(i).toObject()["Tip_Task"].toString(),
                              array.at(i).toObject()["PutereDioda"].toString().toInt(),
                              array.at(i).toObject()["Viteza"].toString().toInt(),
                              array.at(i).toObject()["FrecventaQ"].toString().toInt(),
-                             pointList,
+                             pPointList,
                              array.at(i).toObject()["ValoareTinta"].toString().toInt(),
                              array.at(i).toObject()["NrRRA"].toString().toInt(),
                              array.at(i).toObject()["NrRRD1"].toString().toInt(),
                              array.at(i).toObject()["NrRRD2"].toString().toInt());
        ui->opTypeLineEdit->setText(array.at(i).toObject()["Tip_Task"].toString());
        mpProjectData->getTaskList()->append(pTask);
+       if(mpProjectData->getTaskList()->count() < 1)
+       {
+           printOutputToUser("Nu s-a gasit un task valid.");
+           return result;
+       }
     }
     mpProjectData->toString();
-
-    this->validProjectLoaded(true);
-    this->generateGraph();
+    result = 1;
+    return result;
 }
 
-void MainWindow::generateGraph()
+int MainWindow::generateGraph()
 {
-    for(int i = 0;  i < mpProjectData->getTaskList()->count(); i++)
-    {
-        for(int j = 1; j < mpProjectData->getTaskList()->at(i)->getPointList()->count(); j++)
-        {
-            Punct *pPoint  = mpProjectData->getTaskList()->at(i)->getPointList()->at(j);
-            Punct *pPreviousPoint = mpProjectData->getTaskList()->at(i)->getPointList()->at(j - 1);
-            ui->graphLabel->setPicture(mpPainter->drawLine(pPreviousPoint,pPoint));
-        }
-    }
-    mpPainter->endPaint();
+    mpPainter = new Painter(ui->grwidget,mpProjectData);
 }
 
 void MainWindow::setStatusOnButton(QLabel *pLabel, Status bStatus)
@@ -255,10 +354,12 @@ void MainWindow::on_InitLaserBtn_released()
 {
     if(mpScModule->initializeDevice())
     {
-        //TODO: Add status button for ScModule
+        setStatusOnButton(ui->uscDisplay,Status::SUCCESS);
     }
-    //TODO: mpScModule->SCSciSetContinuousMode()
-    //TODO: External Trigger
+    else
+    {
+        setStatusOnButton(ui->uscDisplay,Status::FAILED);
+    }
 
 }
 
@@ -289,6 +390,7 @@ void MainWindow::checkCbHeartbeat()
 void MainWindow::printOutputToUser(QString qsMsg)
 {
     ui->statusDisplayTextArea->append(qsMsg);
+    qDebug() << "output to user: " << qsMsg;
 }
 
 void MainWindow::on_saveSerialSettings_released()
@@ -309,11 +411,13 @@ void MainWindow::on_btnLaserSettings_released()
 void MainWindow::on_startBtn_released()
 {
     printOutputToUser("START!!!!");
+    mpScModule->startMarking(false);
 }
 
 void MainWindow::on_stopBtn_released()
 {
     printOutputToUser("STOP!!!!!");
+    mpScModule->endMarking();
 }
 
 void MainWindow::on_alignBtn_released()
@@ -323,12 +427,14 @@ void MainWindow::on_alignBtn_released()
         mpAlignTimer->setSingleShot(true);
         mpAlignTimer->start(6000); //TODO: Change to 60000
         printOutputToUser("A inceput alinierea.");
+        mpScModule->beginAlignment();
         bIsAligning = true;
     }
     else
     {
         printOutputToUser("Aliniere in progres. Oprire aliniere.");
         mpAlignTimer->stop();
+        mpScModule->endMarking();
     }
     if(!ui->startBtn->isEnabled())
     {
@@ -343,6 +449,11 @@ void MainWindow::on_align_done()
     {
         bIsAligning = false;
         printOutputToUser("Aliniere terminata.");
-        //TODO: Stop alignment.
+        mpScModule->endMarking();
     }
+}
+
+void MainWindow::printOutputToUserSlot(QString qsMsg)
+{
+    this->printOutputToUser(qsMsg);
 }

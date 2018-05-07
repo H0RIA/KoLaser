@@ -38,9 +38,9 @@ private:
 
     bool bIsAligning;
 
-    void readJson(QString jsonFilePath);
-    void generateProjectData(QJsonDocument);
-    void generateGraph();
+    QString readJson(QString jsonFilePath);
+    int generateProjectData(QJsonDocument);
+    int generateGraph();
     void validProjectLoaded(bool);
     void setStatusOnButton(QLabel *pLabel, Status bStatus);
     void printOutputToUser(QString qsMsg);
@@ -56,6 +56,7 @@ private slots:
     void on_stopBtn_released();
     void on_alignBtn_released();
     void on_align_done();
+    void printOutputToUserSlot(QString qsMsg);
 };
 
 #endif // MAINWINDOW_H

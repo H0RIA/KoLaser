@@ -11,6 +11,8 @@ SCModule::SCModule()
     ,mLaserPort(0)
 {
     mbIsDeviceInitialized = false;
+    mbShouldAlign = true;
+    
     mLaserPort = scComStandardDeviceMapLaserToPort2;
 
     loadLibrary("C:/Users/user/Documents/GitHub/KoLaser/sc_optic.dll");
@@ -346,7 +348,7 @@ bool SCModule::startMarking(bool bIsAlignment)
     result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay,drill_time);
     TREAT_RESULT("SCSciSetDeviceDelay_d",result);
 
-    if(bIsAlignment)
+    if(bIsAlignment && mbShouldAlign)
     {
         this->beginMarking(-1,bIsAlignment);
         result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, mpProjectData->mPCBLaserSpeed);
@@ -417,6 +419,7 @@ bool SCModule::startMarking(bool bIsAlignment)
 
 bool SCModule::endMarking()
 {
+    mbShouldAlign = false;
     long result = 0;
     /* signal stream start
         */
