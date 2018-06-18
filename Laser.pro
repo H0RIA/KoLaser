@@ -51,7 +51,9 @@ FORMS += \
         mainwindow.ui
 
 DISTFILES += \
-    ../../../../testDir/testProiect.txt
+    ../../../../testDir/testProiect.txt \
+    config.xml \
+    package.xml
 
 RESOURCES += \
     resources.qrc

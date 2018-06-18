@@ -9,6 +9,8 @@
 #include<QJsonArray>
 #include<QProcess>
 
+#include "painter.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -59,10 +61,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->validProjectLoaded(false);
 
-    setStatusOnButton(ui->fileStatusDisplay,Status::NOT_INITIALIZED);
-    setStatusOnButton(ui->picoStatusDisplay,Status::NOT_INITIALIZED);
-    setStatusOnButton(ui->cbStatusDisplay,Status::NOT_INITIALIZED);
-    setStatusOnButton(ui->uscDisplay,Status::NOT_INITIALIZED);
+    setStatusOnButton(ui->fileStatusDisplay, Status::KOBER_NOT_INITIALIZED);
+    setStatusOnButton(ui->picoStatusDisplay, Status::KOBER_NOT_INITIALIZED);
+    setStatusOnButton(ui->cbStatusDisplay, Status::KOBER_NOT_INITIALIZED);
+    setStatusOnButton(ui->uscDisplay, Status::KOBER_NOT_INITIALIZED);
 
     ui->baudRateCBox->addItem("BaudRate:");
     ui->baudRateCBox->addItem("9600");
@@ -125,8 +127,8 @@ void MainWindow::on_openFileBtn_released()
         result = this->generateProjectData(QJsonDocument::fromJson(readJson(fileName).toUtf8()));
         if(!result)
         {
-            printOutputToUser("Fisierul de configurare incarcat este invalid!",OutputColor::ERROR);
-            setStatusOnButton(ui->fileStatusDisplay, Status::FAILED);
+            printOutputToUser("Fisierul de configurare incarcat este invalid!", OutputColor::KOBER_ERROR);
+            setStatusOnButton(ui->fileStatusDisplay, Status::KOBER_FAILED);
         }
         this->validProjectLoaded(result);
         if(result)
@@ -136,7 +138,7 @@ void MainWindow::on_openFileBtn_released()
     }
     else
     {
-        printOutputToUser("Nu a fost selectat un fisier de configurare!",OutputColor::ERROR);
+        printOutputToUser("Nu a fost selectat un fisier de configurare!", OutputColor::KOBER_ERROR);
     }
 }
 QString MainWindow::readJson(QString jsonFilePath)
@@ -185,8 +187,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
     long result = 0;
     if (doc.isNull())
     {
-        printOutputToUser("Fisierul de configurare a taskurilor continue o eroare!",OutputColor::ERROR);
-        return result;
+        printOutputToUser("Fisierul de configurare a taskurilor continue o eroare!",OutputColor::KOBER_ERROR);
     }
 
     if(mpProjectData != 0)
@@ -205,13 +206,13 @@ int MainWindow::generateProjectData(QJsonDocument doc)
     }
     else
     {
-        printOutputToUser("Proiectul nu are un nume valid!",OutputColor::ERROR);
+        printOutputToUser("Proiectul nu are un nume valid!",OutputColor::KOBER_ERROR);
         return result;
     }
 
     if(jsonObj["PuterePCB"].toString().isNull())
     {
-        printOutputToUser("Puterea laserului la aliniere este incorect definita!",OutputColor::ERROR);
+        printOutputToUser("Puterea laserului la aliniere este incorect definita!",OutputColor::KOBER_ERROR);
         return result;
     }
     else
@@ -219,7 +220,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
         int nPcbPower = jsonObj["PuterePCB"].toString().toInt();
         if (nPcbPower < 0 || nPcbPower > 100)
         {
-            printOutputToUser("Puterea laserului la aliniere are o valoare incorecta!",OutputColor::ERROR);
+            printOutputToUser("Puterea laserului la aliniere are o valoare incorecta!",OutputColor::KOBER_ERROR);
             return result;
         }
         mpProjectData->setPcbLaserPower(nPcbPower);
@@ -227,7 +228,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
 
     if(jsonObj["VitezaPCB"].toString().isNull())
     {
-        printOutputToUser("Viteza laserului la aliniere este incorect definita!",OutputColor::ERROR);
+        printOutputToUser("Viteza laserului la aliniere este incorect definita!",OutputColor::KOBER_ERROR);
         return result;
 
     }
@@ -236,7 +237,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
         int nPcbSpeed = jsonObj["VitezaPCB"].toString().toInt();
         if (nPcbSpeed < 0.1 || nPcbSpeed > 100)
         {
-            printOutputToUser("Viteza laserului la aliniere are o valoare incorecta!",OutputColor::ERROR);
+            printOutputToUser("Viteza laserului la aliniere are o valoare incorecta!",OutputColor::KOBER_ERROR);
             return result;
         }
         mpProjectData->setPcbLaserSpeed(nPcbSpeed);
@@ -248,7 +249,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
         QStringList coordonates = pcbRute.at(i).toString().split(">");
         if(coordonates.count() != 2)
         {
-             this->printOutputToUser(QString("Punctul %1 din ruta de aliniere e definit gresit!").arg(i+1),OutputColor::ERROR);
+             this->printOutputToUser(QString("Punctul %1 din ruta de aliniere e definit gresit!").arg(i+1),OutputColor::KOBER_ERROR);
              return result;
         }
         mpProjectData->getPCBRute()->append(new Punct("",coordonates[0].toDouble(),coordonates[1].toDouble()));
@@ -256,7 +257,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
 
     if(mpProjectData->getPCBRute()->count() == 0)
     {
-        printOutputToUser("Ruta de aliniere nu exista!",OutputColor::ERROR);
+        printOutputToUser("Ruta de aliniere nu exista!",OutputColor::KOBER_ERROR);
         return result;
     }
 
@@ -285,7 +286,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
            QStringList coordonates = pointStr.split(">");
            if(coordonates.count() != 2)
            {
-               printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1),OutputColor::ERROR);
+               printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1),OutputColor::KOBER_ERROR);
                return result;
            }
            for(int indexCoordonate; indexCoordonate < coordonates.count(); indexCoordonate++)
@@ -294,7 +295,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
                        || indexCoordonate > 50.00)
                {
                    printOutputToUser(QString("Punctul %1 din taskul %2 nu corespunde cerintelor ariei de lucru!").arg(
-                                         j+1).arg(i+1),OutputColor::ERROR);
+                                         j+1).arg(i+1),OutputColor::KOBER_ERROR);
                    return result;
                }
            }
@@ -303,28 +304,28 @@ int MainWindow::generateProjectData(QJsonDocument doc)
        int nLaserPower = array.at(i).toObject()["PutereDioda"].toString().toInt();
        if(nLaserPower < 0 || nLaserPower > 100)
        {
-           printOutputToUser(QString("Puterea laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::ERROR);
+           printOutputToUser(QString("Puterea laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::KOBER_ERROR);
            return result;
        }
 
        int nLaserFrequency = array.at(i).toObject()["FrecventaQ"].toString().toInt();
        if(nLaserFrequency < 5 || nLaserFrequency > 10)
        {
-           printOutputToUser(QString("Frecventa Q a laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::ERROR);
+           printOutputToUser(QString("Frecventa Q a laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::KOBER_ERROR);
            return result;
        }
 
        int nLaserSpeed = jsonObj["Viteza"].toString().toInt();
        if (nLaserSpeed < 0.1 || nLaserSpeed > 100)
        {
-           printOutputToUser(QString("Viteza laserului pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::ERROR);
+           printOutputToUser(QString("Viteza laserului pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
            return result;
        }
 
        int nTargetValue = jsonObj["ValoareTinta"].toString().toInt();
        if (nTargetValue < 1 || nTargetValue > 1000000)
        {
-           printOutputToUser(QString("Valoarea tinta a rezistentei pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::ERROR);
+           printOutputToUser(QString("Valoarea tinta a rezistentei pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
            return result;
        }
 
@@ -341,7 +342,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
        mpProjectData->getTaskList()->append(pTask);
        if(mpProjectData->getTaskList()->count() < 1)
        {
-           printOutputToUser("Nu s-a gasit un task valid.",OutputColor::ERROR);
+           printOutputToUser("Nu s-a gasit un task valid.",OutputColor::KOBER_ERROR);
            return result;
        }
     }
@@ -360,15 +361,15 @@ int MainWindow::generateGraph()
 
 void MainWindow::setStatusOnButton(QLabel *pLabel, Status bStatus)
 {
-    if(bStatus == Status::SUCCESS)
+    if(bStatus == Status::KOBER_SUCCESS)
     {
         pLabel->setPixmap(QPixmap(QString::fromUtf8(":/new/resources/images/olive-green-icon.png")));
     }
-    if(bStatus == Status::FAILED)
+    if(bStatus == Status::KOBER_FAILED)
     {
         pLabel->setPixmap(QPixmap(QString::fromUtf8(":/new/resources/images/red-icon.png")));
     }
-    if(bStatus == Status::NOT_INITIALIZED)
+    if(bStatus == Status::KOBER_NOT_INITIALIZED)
     {
         pLabel->setPixmap(QPixmap(QString::fromUtf8(":/new/resources/images/gray-dot.png")));
     }
@@ -382,8 +383,8 @@ void MainWindow::validProjectLoaded(bool bValidProject)
 
     if(bValidProject)
     {
-        setStatusOnButton(ui->fileStatusDisplay,Status::SUCCESS);
-        printOutputToUser("Fisierul de configurare a fost incarcat cu succes!",OutputColor::SUCCES);
+        setStatusOnButton(ui->fileStatusDisplay,Status::KOBER_SUCCESS);
+        printOutputToUser("Fisierul de configurare a fost incarcat cu succes!",OutputColor::KOBER_SUCCES);
         ui->InitLaserBtn->setEnabled(true);
 
         mbStatusPico = mpPicoModule->initializeDevice();
@@ -391,26 +392,26 @@ void MainWindow::validProjectLoaded(bool bValidProject)
         {
             double nPicoValue;
             mpPicoModule->readVoltage(&nPicoValue);
-            printOutputToUser(QString("Multimetrul este contectat si a citit valoarea %1").arg(nPicoValue),OutputColor::SUCCES);
-            setStatusOnButton(ui->picoStatusDisplay,Status::SUCCESS);
+            printOutputToUser(QString("Multimetrul este contectat si a citit valoarea %1").arg(nPicoValue),OutputColor::KOBER_SUCCES);
+            setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_SUCCESS);
         }
         else
         {
-            printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::ERROR);
-            setStatusOnButton(ui->picoStatusDisplay,Status::FAILED);
+            printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::KOBER_ERROR);
+            setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);
         }
         mpPicoTimer->start(3000); //TODO: MODIFY TO 5 MINUTES.
 
         mbStatusCb = mpControlBoard->initializeDevice();
         if(mbStatusCb)
         {
-            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::SUCCES);
-            setStatusOnButton(ui->cbStatusDisplay,Status::SUCCESS);
+            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::KOBER_SUCCES);
+            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
         }
         else
         {
-            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::ERROR);
-            setStatusOnButton(ui->cbStatusDisplay,Status::FAILED);
+            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_ERROR);
+            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);
         }
         mpCBTimer->start(3000);
     }
@@ -420,13 +421,13 @@ void MainWindow::on_InitLaserBtn_released()
 {
     if(mpScModule->initializeDevice())
     {
-        printOutputToUser("Laserul a fost initializat cu succes!",OutputColor::SUCCES);
-        setStatusOnButton(ui->uscDisplay,Status::SUCCESS);
+        printOutputToUser("Laserul a fost initializat cu succes!",OutputColor::KOBER_SUCCES);
+        setStatusOnButton(ui->uscDisplay,Status::KOBER_SUCCESS);
     }
     else
     {
-        printOutputToUser("Laserul nu a fost initializat cu succes!",OutputColor::ERROR);
-        setStatusOnButton(ui->uscDisplay,Status::FAILED);
+        printOutputToUser("Laserul nu a fost initializat cu succes!",OutputColor::KOBER_ERROR);
+        setStatusOnButton(ui->uscDisplay,Status::KOBER_FAILED);
     }
 
 }
@@ -435,37 +436,37 @@ void MainWindow::checkPicoHeartbeat()
 {
     if(mpPicoModule->heartbeat())
     {
-        printOutputToUser("PicoTest is alive and well",OutputColor::REPORT);
-        setStatusOnButton(ui->picoStatusDisplay,Status::SUCCESS);
+        printOutputToUser("PicoTest is alive and well",OutputColor::KOBER_REPORT);
+        setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_SUCCESS);
     }
     else {
-        printOutputToUser("Poor Pico has died.",OutputColor::ERROR);
-        setStatusOnButton(ui->picoStatusDisplay,Status::FAILED);}
+        printOutputToUser("Poor Pico has died.",OutputColor::KOBER_ERROR);
+        setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);}
 }
 
 void MainWindow::checkCbHeartbeat()
 {
     if(mpControlBoard->heartbeat())
     {
-        printOutputToUser("Control Board is alive and well",OutputColor::REPORT);
-        setStatusOnButton(ui->cbStatusDisplay,Status::SUCCESS);
+        printOutputToUser("Control Board is alive and well",OutputColor::KOBER_REPORT);
+        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
     }
     else {
-        printOutputToUser("Poor CB has died.",OutputColor::ERROR);
-        setStatusOnButton(ui->cbStatusDisplay,Status::FAILED);}
+        printOutputToUser("Poor CB has died.",OutputColor::KOBER_ERROR);
+        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);}
 }
 
 void MainWindow::printOutputToUser(QString qsMsg, OutputColor color)
 {
-    if(color == OutputColor::ERROR)
+    if(color == OutputColor::KOBER_ERROR)
     {
         qsMsg = "<font color=\"red\">" + qsMsg + "</font>";
     }
-    if(color == OutputColor::SUCCES)
+    if(color == OutputColor::KOBER_SUCCES)
     {
         qsMsg = "<font color=\"green\">" + qsMsg + "</font>";
     }
-    if(color == OutputColor::REPORT)
+    if(color == OutputColor::KOBER_REPORT)
     {
         qsMsg = "<font color=\"blue\">" + qsMsg + "</font>";
     }
@@ -477,27 +478,27 @@ void MainWindow::on_saveSerialSettings_released()
 {
     mpControlBoard->saveSerialSettings(ui->portNameCBox->currentText(),QSerialPort::Baud9600,QSerialPort::Data8,
                                        QSerialPort::NoParity,QSerialPort::OneStop,QSerialPort::NoFlowControl);
-    printOutputToUser("Talking to Serial Port " + ui->portNameCBox->currentText(),OutputColor::REPORT);
+    printOutputToUser("Talking to Serial Port " + ui->portNameCBox->currentText(),OutputColor::KOBER_REPORT);
 }
 
 void MainWindow::on_btnLaserSettings_released()
 {
     if (QProcess::execute("C:/scaps/sam2d/tools/sc_setup.exe") == -2)
     {
-        printOutputToUser("Cannot start sc_setup.exe",OutputColor::ERROR);
+        printOutputToUser("Cannot start sc_setup.exe",OutputColor::KOBER_ERROR);
     }
 }
 
 void MainWindow::on_startBtn_released()
 {
-    printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::REPORT);
+    printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_REPORT);
     mpScModule->beginTaskMark();
 
 }
 
 void MainWindow::on_stopBtn_released()
 {
-    printOutputToUser("Procesul de marcare a taskurilor a fost oprit.",OutputColor::REPORT);
+    printOutputToUser("Procesul de marcare a taskurilor a fost oprit.",OutputColor::KOBER_REPORT);
     mpScModule->initializeDevice();
 }
 
@@ -507,13 +508,13 @@ void MainWindow::on_alignBtn_released()
     {
         mpAlignTimer->setSingleShot(true);
         mpAlignTimer->start(60000);
-        printOutputToUser("A inceput alinierea.",OutputColor::REPORT);
+        printOutputToUser("A inceput alinierea.",OutputColor::KOBER_REPORT);
         mpScModule->markAlignment();
         bIsAligning = true;
     }
     else
     {
-        printOutputToUser("Aliniere in progres. Oprire aliniere.",OutputColor::REPORT);
+        printOutputToUser("Aliniere in progres. Oprire aliniere.",OutputColor::KOBER_REPORT);
         mpAlignTimer->stop();
         mpScModule->initializeDevice();
         bIsAligning = false;
@@ -530,12 +531,12 @@ void MainWindow::on_align_done()
     if(bIsAligning)
     {
         bIsAligning = false;
-        printOutputToUser("Aliniere terminata.",OutputColor::REPORT);
+        printOutputToUser("Aliniere terminata.",OutputColor::KOBER_REPORT);
         mpScModule->initializeDevice();
     }
 }
 
-void MainWindow::printOutputToUserSlot(QString qsMsg,OutputColor color)
+void MainWindow::printOutputToUserSlot(QString qsMsg, OutputColor color)
 {
     this->printOutputToUser(qsMsg,color);
 }

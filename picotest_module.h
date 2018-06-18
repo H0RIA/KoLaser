@@ -64,7 +64,7 @@ class PicoTestModule
         bool isInitialized()const;
 
     public:
-        void initialize();
+        bool initialize();
 
     private:
         PicoTestModule(const PicoTestModule& ptm) = delete;
