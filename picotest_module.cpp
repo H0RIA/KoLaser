@@ -227,6 +227,7 @@ PicoTestModule::readVoltage(double* output)
     if(status != VI_SUCCESS)
         return false;
 
+    // Clearing pico test takes some time... random guess: 500
     Sleep(500);
 
     strcpy(commandBuffer, "MEAS:VOLT:DC? 10,0.00001");
@@ -234,7 +235,7 @@ PicoTestModule::readVoltage(double* output)
     if(status != VI_SUCCESS)
         return false;
 
-    Sleep(500);
+    Sleep(200);
 
     status = ReadUsb(mInstrUsbtmc, outputBuffer, RESPONSE_BUFFER_SIZE, &nRead);
     if(status != VI_SUCCESS)
