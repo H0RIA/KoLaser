@@ -489,6 +489,7 @@ void MainWindow::on_btnLaserSettings_released()
     }
 }
 
+
 void MainWindow::on_startBtn_released()
 {
     printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_REPORT);
