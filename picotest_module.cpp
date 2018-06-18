@@ -1,6 +1,7 @@
 #include "picotest_module.h"
 #include <QDebug>
 
+#ifndef Q_OS_MACOS
 dll_PviOpenDefaultRM_usb     PviOpenDefaultRM_usb;
 dll_PviFindRsrc_usb          PviFindRsrc_usb;
 dll_PviOpen_usb              PviOpen_usb;
@@ -288,3 +289,4 @@ PicoTestModule::readIntoBuffer(BYTE* viBuffer, int count)
     mBuffer[index] = '\0';
     qDebug() << mBuffer;
 }
+#endif

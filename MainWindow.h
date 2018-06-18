@@ -37,13 +37,15 @@ private:
     QTimer *mpAlignTimer;
 
     bool bIsAligning;
+    bool mbStatusPico;
+    bool mbStatusCb;
 
-    void readJson(QString jsonFilePath);
-    void generateProjectData(QJsonDocument);
-    void generateGraph();
+    QString readJson(QString jsonFilePath);
+    int generateProjectData(QJsonDocument);
+    int generateGraph();
     void validProjectLoaded(bool);
     void setStatusOnButton(QLabel *pLabel, Status bStatus);
-    void printOutputToUser(QString qsMsg);
+    void printOutputToUser(QString qsMsg, OutputColor color);
 
 private slots:
     void on_openFileBtn_released();
@@ -56,6 +58,7 @@ private slots:
     void on_stopBtn_released();
     void on_alignBtn_released();
     void on_align_done();
+    void printOutputToUserSlot(QString qsMsg, OutputColor color);
 };
 
 #endif // MAINWINDOW_H

@@ -1,13 +1,16 @@
 #include "sci_dll_functions.h"
-#include "Windows.h"
 
-/*
+#ifndef Q_OS_MACOS
+#include "Windows.h"
+#endif
+
+#ifdef Q_OS_MACOS
 void* GetProcAddress( HMODULE,LPCSTR)
 {
     // TODO -> call only for windows
 
 }
-*/
+#endif
 /*** DLL interface defintitions *****************************************/
 
 dll_sc_sci_set_card_type              sc_sci_set_card_type;

@@ -2,6 +2,9 @@
 #define PICOTEST_MODULE_H
 
 #include "./visa.h"
+#include <Qt>
+
+#ifndef Q_OS_MACOS
 #include "windows.h"
 #include <QMap>
 
@@ -60,7 +63,7 @@ class PicoTestModule
         bool readVoltage(double* output);
         bool isInitialized()const;
 
-    protected:
+    public:
         void initialize();
 
     private:
@@ -78,5 +81,5 @@ class PicoTestModule
         int             mTimeout;
         bool            mInitialized;
 };
-
+#endif
 #endif // PICOTEST_MODULE_H

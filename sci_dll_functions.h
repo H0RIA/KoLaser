@@ -2,8 +2,11 @@
 #define SCI_DLL_FUNCTIONS_H
 
 /*** DLL interface defintitions *****************************************/
+#include <Qt>
 
+#ifndef Q_OS_MACOS
 #include <windows.h>
+#endif
 
 #ifndef _WIN32
 typedef char* LPSTR;

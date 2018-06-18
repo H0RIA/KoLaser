@@ -8,7 +8,7 @@
 class Punct
 {
 public:
-    Punct(QString,double , double);
+    Punct(QString qsOperation,double x, double y);
     QString mOperatie;
     double mX;
     double mY;
@@ -18,12 +18,13 @@ public:
 
 class Task
 {
+public:
     QString mOperationType;
-    int mPutereDioda;
-    int mViteza;
-    int mFrecventaQ;
-    QList<Punct*> *mpPointList;
-    int ValoareTinta;
+    int mLaserPower;
+    int mLaserSpeed;
+    int mQFrequency;
+    QList<Punct*>* mpPointList;
+    int mGoal;
     int NrRRA;
     int NrRRD1;
     int NrRRD2;
@@ -39,16 +40,23 @@ public:
 class ProjectData
 {
     QString mProjectName;
-    QList<Task*> *mpTasksList;
+    QList<Task*>* mpTasksList;
+    QList<Punct*>* mpPCBRute;
 
 public:
     ProjectData();
     ~ProjectData();
 
+    int mPCBLaserPower;
+    int mPCBLaserSpeed;
+
     void setProjectName(QString sProjectName);
     QString getProjectName();
 
     QList<Task*>* getTaskList();
+    QList<Punct*>* getPCBRute();
+    void setPcbLaserPower(int nLaserPower);
+    void setPcbLaserSpeed(int nLaserSpeed);
 
     void toString();
 };

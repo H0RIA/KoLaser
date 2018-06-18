@@ -9,6 +9,8 @@
 #include<QColor>
 #include<QLabel>
 
+#include "graphlabel.h"
+
 enum Status
 {
     NOT_INITIALIZED,
@@ -16,22 +18,19 @@ enum Status
     FAILED
 };
 
+enum OutputColor
+{
+    ERROR,
+    SUCCES,
+    REPORT
+};
 
 class Painter
 {
-    QPicture *mpPicture;
-    QPainter *mpPainter;
-
-    void setPainterForGraph(QColor color);
-    void setPainterForStatusButton(Status eStatus);
-    void resetPicture();
+    GraphLabel *mpGraphLabel;
 public:
-    Painter();
+    Painter(QWidget *parent,ProjectData* pProjectData);
     ~Painter();
-
-    QPicture drawLine(Punct*,Punct*);
-    QPicture drawStatusIcon(Status bStatus);
-    void endPaint();
 };
 
 #endif // PAINTER_H

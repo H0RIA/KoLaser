@@ -3,9 +3,11 @@
 
 #include<QString>
 #include<QMessageBox>
+#include<QTimer>
 
 #include"stubs_from_windows.h"
 #include"sci_dll_functions.h"
+#include"projectdata.h"
 
 #define LIBRARY_FILE_NAME_RELEASE   "sc_optic.dll"
 #define LIBRARY_FILE_NAME_DEBUG     "sc_optic_d.dll"
@@ -32,15 +34,18 @@ typedef void* HMODULE;
     if (res != SC_OK)\
     {\
         QString strError = QString("%1 returned %2").arg(fnName).arg(res);\
-        showMessageBox(strError);\
+        emit printOutputToUser(strError);\
     }
 #endif // !TREAT_RESULT
 
 
-class SCModule
+class SCModule : public QObject
 {
+    Q_OBJECT
+
     bool mbIsDeviceInitialized;
     bool mbAreSettingsLoaded;
+    bool mbShouldAlign;
 
     HMODULE mLaserLib;
 
@@ -50,7 +55,9 @@ class SCModule
     long mLaserMode;
     long mLaserPort;
 
-    void showMessageBox(QString qMsg);
+    QTimer* mpExecutionTimer;
+
+    ProjectData* mpProjectData;
 
     public:
         SCModule();
@@ -61,6 +68,13 @@ class SCModule
         bool loadLibrary(const QString& path = QString());
         bool checkFunction(void *pfunc, const QString func_name);
         bool initializeDevice();
+
+        void markAlignment();
+        void beginTaskMark();
+        void setDeviceSpeed();
+        void actuallyMarkTasks(bool bIsAlignment);
+
+        void setProjectData(ProjectData* pProjectData);
 
         // DLL function mapping
         long SCSciSetCardType(char *card_type);
@@ -133,6 +147,10 @@ class SCModule
         long SCSciGetIdentString(char *Ident);
         long SCSciGetDeviceMapLaserPort(long *Port);
         long SCSciSetDeviceMapLaserPort(long Port);
+private slots:
+        void checkExecution();
+signals:
+        void printOutputToUser(QString);
 };
 
 #endif // SCMODULE_H
