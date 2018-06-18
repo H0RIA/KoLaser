@@ -23,8 +23,15 @@ public:
     bool heartbeat();
     bool isPicoModuleAlive();
 
+
+public slots:
+    bool readVoltage(double* output);
+
 private:
-    PicoTestModule mLibrary;
+    PicoTestModule *mpLibrary;
+signals:
+        void printOutputToUser(QString);
+
 };
 
 #endif // PICOMODULE_H

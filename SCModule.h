@@ -45,6 +45,7 @@ class SCModule : public QObject
 
     bool mbIsDeviceInitialized;
     bool mbAreSettingsLoaded;
+    bool mbShouldAlign;
 
     HMODULE mLaserLib;
 
@@ -67,10 +68,11 @@ class SCModule : public QObject
         bool loadLibrary(const QString& path = QString());
         bool checkFunction(void *pfunc, const QString func_name);
         bool initializeDevice();
-        bool beginMarking(int nTaskIndex, bool isAlignment = false);
-        bool startMarking(bool isAlignment);
-        bool endMarking();
-        bool beginAlignment();
+
+        void markAlignment();
+        void beginTaskMark();
+        void setDeviceSpeed();
+        void actuallyMarkTasks(bool bIsAlignment);
 
         void setProjectData(ProjectData* pProjectData);
 

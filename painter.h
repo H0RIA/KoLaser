@@ -18,6 +18,12 @@ enum Status
     FAILED
 };
 
+enum OutputColor
+{
+    ERROR,
+    SUCCES,
+    REPORT
+};
 
 class Painter
 {

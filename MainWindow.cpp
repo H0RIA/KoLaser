@@ -74,11 +74,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stopBitsCBox->addItem("1 bit");
     ui->flowControlCBox->addItem("Flow Control:");
     ui->flowControlCBox->addItem("No Flow Control");
+    ui->rFeedbackLineEdit->setText("500.00");
 
     connect(mpPicoTimer,SIGNAL(timeout()),this,SLOT(checkPicoHeartbeat()),Qt::AutoConnection);
     connect(mpCBTimer,SIGNAL(timeout()),this,SLOT(checkCbHeartbeat()),Qt::AutoConnection);
     connect(mpAlignTimer,SIGNAL(timeout()),SLOT(on_align_done()),Qt::AutoConnection);
-    connect(mpScModule,SIGNAL(printOutputToUser(QString)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
+
+    connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
+    connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
 }
 
 MainWindow::~MainWindow()
@@ -122,14 +125,18 @@ void MainWindow::on_openFileBtn_released()
         result = this->generateProjectData(QJsonDocument::fromJson(readJson(fileName).toUtf8()));
         if(!result)
         {
-            qDebug() << "Failed to generate project data";
+            printOutputToUser("Fisierul de configurare incarcat este invalid!",OutputColor::ERROR);
+            setStatusOnButton(ui->fileStatusDisplay, Status::FAILED);
         }
         this->validProjectLoaded(result);
-        this->generateGraph();
+        if(result)
+        {
+            this->generateGraph();
+        }
     }
     else
     {
-        qDebug() << "File name is empty!";
+        printOutputToUser("Nu a fost selectat un fisier de configurare!",OutputColor::ERROR);
     }
 }
 QString MainWindow::readJson(QString jsonFilePath)
@@ -145,13 +152,13 @@ QString MainWindow::readJson(QString jsonFilePath)
         json = "{"
                "\"Proiect\": \"Senzor Presiune 0 - 4 bari\","
                "\"PuterePCB\" : \"0\","
-               "\"VitezaPCB\" : \"30000\","
-               "\"RutaPCB\" : [\"-9.500>10.000\", \"9.500>10.000\", \"9.500>-10.000\", \"-9.500>-10.000\", \"-9.500>10.000\", \"0.000>0.000\"],"
+               "\"VitezaPCB\" : \"300\","
+               "\"RutaPCB\" : [\"-9.500>10.000\", \"9.500>10.000\", \"9.500>-10.000\", \"-9.500>-10.000\", \"-9.500>10.000\", \"-9.500>10.000\"],"
                 "\"Tasks\" :"
                    "[{"
                        "\"Tip_Task\" : \"INDEPENDENT\","
                        "\"PutereDioda\" : \"50\","
-                       "\"Viteza\" : \"10000\","
+                       "\"Viteza\" : \"10\","
                        "\"FrecventaQ\" : \"5\","
                        "\"Ruta\" : [\"S0.123>1.123\", \"A0.123>2.123\",\"1.123>2.123\",\"1.123>1.123\",\"S0.123>4.123\",\"A0.123>3.123\",\"1.123>3.123\",\"1.123>4.123\",\"S0.123>0.123\"],"
                        "\"ValoareTinta\" : \"1200\","
@@ -178,9 +185,8 @@ int MainWindow::generateProjectData(QJsonDocument doc)
     long result = 0;
     if (doc.isNull())
     {
-        qDebug() << "Json parse failed. Please check Json structure.";
-        return 0;
-//        QMessageBox::Information(this,tr("KoLaser"),tr("Invalid Json file!!"));
+        printOutputToUser("Fisierul de configurare a taskurilor continue o eroare!",OutputColor::ERROR);
+        return result;
     }
 
     if(mpProjectData != 0)
@@ -199,30 +205,41 @@ int MainWindow::generateProjectData(QJsonDocument doc)
     }
     else
     {
-        printOutputToUser("Invalid project name!");
+        printOutputToUser("Proiectul nu are un nume valid!",OutputColor::ERROR);
         return result;
     }
 
-    if(!jsonObj["PuterePCB"].toString().isNull())
+    if(jsonObj["PuterePCB"].toString().isNull())
+    {
+        printOutputToUser("Puterea laserului la aliniere este incorect definita!",OutputColor::ERROR);
+        return result;
+    }
+    else
     {
         int nPcbPower = jsonObj["PuterePCB"].toString().toInt();
+        if (nPcbPower < 0 || nPcbPower > 100)
+        {
+            printOutputToUser("Puterea laserului la aliniere are o valoare incorecta!",OutputColor::ERROR);
+            return result;
+        }
         mpProjectData->setPcbLaserPower(nPcbPower);
     }
-    else
-    {
-        printOutputToUser("Invalid PCB Power!");
-        return result;
-    }
 
-    if(!jsonObj["VitezaPCB"].toString().isNull())
+    if(jsonObj["VitezaPCB"].toString().isNull())
+    {
+        printOutputToUser("Viteza laserului la aliniere este incorect definita!",OutputColor::ERROR);
+        return result;
+
+    }
+    else
     {
         int nPcbSpeed = jsonObj["VitezaPCB"].toString().toInt();
+        if (nPcbSpeed < 0.1 || nPcbSpeed > 100)
+        {
+            printOutputToUser("Viteza laserului la aliniere are o valoare incorecta!",OutputColor::ERROR);
+            return result;
+        }
         mpProjectData->setPcbLaserSpeed(nPcbSpeed);
-    }
-    else
-    {
-        printOutputToUser("Invalid PCB Speed!");
-        return result;
     }
 
     QJsonArray pcbRute = jsonObj["RutaPCB"].toArray();
@@ -231,15 +248,16 @@ int MainWindow::generateProjectData(QJsonDocument doc)
         QStringList coordonates = pcbRute.at(i).toString().split(">");
         if(coordonates.count() != 2)
         {
-             this->printOutputToUser(QString("Punctul %1 din ruta PCB e definit gresit!").arg(i+1));
-            continue;
+             this->printOutputToUser(QString("Punctul %1 din ruta de aliniere e definit gresit!").arg(i+1),OutputColor::ERROR);
+             return result;
         }
         mpProjectData->getPCBRute()->append(new Punct("",coordonates[0].toDouble(),coordonates[1].toDouble()));
     }
 
     if(mpProjectData->getPCBRute()->count() == 0)
     {
-        printOutputToUser("Ruta PCB invalida!");
+        printOutputToUser("Ruta de aliniere nu exista!",OutputColor::ERROR);
+        return result;
     }
 
     QJsonArray array = jsonObj["Tasks"].toArray();
@@ -267,17 +285,55 @@ int MainWindow::generateProjectData(QJsonDocument doc)
            QStringList coordonates = pointStr.split(">");
            if(coordonates.count() != 2)
            {
-               printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1));
-               continue;
+               printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1),OutputColor::ERROR);
+               return result;
+           }
+           for(int indexCoordonate; indexCoordonate < coordonates.count(); indexCoordonate++)
+           {
+               if (indexCoordonate < -50.00
+                       || indexCoordonate > 50.00)
+               {
+                   printOutputToUser(QString("Punctul %1 din taskul %2 nu corespunde cerintelor ariei de lucru!").arg(
+                                         j+1).arg(i+1),OutputColor::ERROR);
+                   return result;
+               }
            }
            pPointList->append(new Punct(op,coordonates[0].toDouble(),coordonates[1].toDouble()));
        }
+       int nLaserPower = array.at(i).toObject()["PutereDioda"].toString().toInt();
+       if(nLaserPower < 0 || nLaserPower > 100)
+       {
+           printOutputToUser(QString("Puterea laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::ERROR);
+           return result;
+       }
+
+       int nLaserFrequency = array.at(i).toObject()["FrecventaQ"].toString().toInt();
+       if(nLaserFrequency < 5 || nLaserFrequency > 10)
+       {
+           printOutputToUser(QString("Frecventa Q a laserului pentru taskul %1 nu corespunde cerintelor!").arg(i+1),OutputColor::ERROR);
+           return result;
+       }
+
+       int nLaserSpeed = jsonObj["Viteza"].toString().toInt();
+       if (nLaserSpeed < 0.1 || nLaserSpeed > 100)
+       {
+           printOutputToUser(QString("Viteza laserului pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::ERROR);
+           return result;
+       }
+
+       int nTargetValue = jsonObj["ValoareTinta"].toString().toInt();
+       if (nTargetValue < 1 || nTargetValue > 1000000)
+       {
+           printOutputToUser(QString("Valoarea tinta a rezistentei pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::ERROR);
+           return result;
+       }
+
        Task *pTask= new Task(array.at(i).toObject()["Tip_Task"].toString(),
-                             array.at(i).toObject()["PutereDioda"].toString().toInt(),
-                             array.at(i).toObject()["Viteza"].toString().toInt(),
-                             array.at(i).toObject()["FrecventaQ"].toString().toInt(),
+                             nLaserPower,
+                             nLaserSpeed,
+                             nLaserFrequency,
                              pPointList,
-                             array.at(i).toObject()["ValoareTinta"].toString().toInt(),
+                             nTargetValue,
                              array.at(i).toObject()["NrRRA"].toString().toInt(),
                              array.at(i).toObject()["NrRRD1"].toString().toInt(),
                              array.at(i).toObject()["NrRRD2"].toString().toInt());
@@ -285,11 +341,13 @@ int MainWindow::generateProjectData(QJsonDocument doc)
        mpProjectData->getTaskList()->append(pTask);
        if(mpProjectData->getTaskList()->count() < 1)
        {
-           printOutputToUser("Nu s-a gasit un task valid.");
+           printOutputToUser("Nu s-a gasit un task valid.",OutputColor::ERROR);
            return result;
        }
     }
     mpProjectData->toString();
+    mpScModule->setProjectData(mpProjectData);
+
     result = 1;
     return result;
 }
@@ -297,6 +355,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
 int MainWindow::generateGraph()
 {
     mpPainter = new Painter(ui->grwidget,mpProjectData);
+    return 1;
 }
 
 void MainWindow::setStatusOnButton(QLabel *pLabel, Status bStatus)
@@ -324,26 +383,33 @@ void MainWindow::validProjectLoaded(bool bValidProject)
     if(bValidProject)
     {
         setStatusOnButton(ui->fileStatusDisplay,Status::SUCCESS);
+        printOutputToUser("Fisierul de configurare a fost incarcat cu succes!",OutputColor::SUCCES);
         ui->InitLaserBtn->setEnabled(true);
 
-        if(mpPicoModule->initializeDevice())
+        mbStatusPico = mpPicoModule->initializeDevice();
+        if(mbStatusPico)
         {
+            double nPicoValue;
+            mpPicoModule->readVoltage(&nPicoValue);
+            printOutputToUser(QString("Multimetrul este contectat si a citit valoarea %1").arg(nPicoValue),OutputColor::SUCCES);
             setStatusOnButton(ui->picoStatusDisplay,Status::SUCCESS);
-            mpPicoModule->configureDevice();
         }
         else
         {
+            printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::ERROR);
             setStatusOnButton(ui->picoStatusDisplay,Status::FAILED);
         }
-
         mpPicoTimer->start(3000); //TODO: MODIFY TO 5 MINUTES.
 
-        if(mpControlBoard->initializeDevice())
+        mbStatusCb = mpControlBoard->initializeDevice();
+        if(mbStatusCb)
         {
+            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::SUCCES);
             setStatusOnButton(ui->cbStatusDisplay,Status::SUCCESS);
         }
         else
         {
+            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::ERROR);
             setStatusOnButton(ui->cbStatusDisplay,Status::FAILED);
         }
         mpCBTimer->start(3000);
@@ -354,10 +420,12 @@ void MainWindow::on_InitLaserBtn_released()
 {
     if(mpScModule->initializeDevice())
     {
+        printOutputToUser("Laserul a fost initializat cu succes!",OutputColor::SUCCES);
         setStatusOnButton(ui->uscDisplay,Status::SUCCESS);
     }
     else
     {
+        printOutputToUser("Laserul nu a fost initializat cu succes!",OutputColor::ERROR);
         setStatusOnButton(ui->uscDisplay,Status::FAILED);
     }
 
@@ -367,11 +435,11 @@ void MainWindow::checkPicoHeartbeat()
 {
     if(mpPicoModule->heartbeat())
     {
-        printOutputToUser("PicoTest is alive and well");
+        printOutputToUser("PicoTest is alive and well",OutputColor::REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::SUCCESS);
     }
     else {
-        printOutputToUser("Poor Pico has died.");
+        printOutputToUser("Poor Pico has died.",OutputColor::ERROR);
         setStatusOnButton(ui->picoStatusDisplay,Status::FAILED);}
 }
 
@@ -379,16 +447,28 @@ void MainWindow::checkCbHeartbeat()
 {
     if(mpControlBoard->heartbeat())
     {
-        printOutputToUser("Control Board is alive and well");
+        printOutputToUser("Control Board is alive and well",OutputColor::REPORT);
         setStatusOnButton(ui->cbStatusDisplay,Status::SUCCESS);
     }
     else {
-        printOutputToUser("Poor CB has died.");
+        printOutputToUser("Poor CB has died.",OutputColor::ERROR);
         setStatusOnButton(ui->cbStatusDisplay,Status::FAILED);}
 }
 
-void MainWindow::printOutputToUser(QString qsMsg)
+void MainWindow::printOutputToUser(QString qsMsg, OutputColor color)
 {
+    if(color == OutputColor::ERROR)
+    {
+        qsMsg = "<font color=\"red\">" + qsMsg + "</font>";
+    }
+    if(color == OutputColor::SUCCES)
+    {
+        qsMsg = "<font color=\"green\">" + qsMsg + "</font>";
+    }
+    if(color == OutputColor::REPORT)
+    {
+        qsMsg = "<font color=\"blue\">" + qsMsg + "</font>";
+    }
     ui->statusDisplayTextArea->append(qsMsg);
     qDebug() << "output to user: " << qsMsg;
 }
@@ -397,27 +477,28 @@ void MainWindow::on_saveSerialSettings_released()
 {
     mpControlBoard->saveSerialSettings(ui->portNameCBox->currentText(),QSerialPort::Baud9600,QSerialPort::Data8,
                                        QSerialPort::NoParity,QSerialPort::OneStop,QSerialPort::NoFlowControl);
-    printOutputToUser("Talking to Serial Port " + ui->portNameCBox->currentText());
+    printOutputToUser("Talking to Serial Port " + ui->portNameCBox->currentText(),OutputColor::REPORT);
 }
 
 void MainWindow::on_btnLaserSettings_released()
 {
     if (QProcess::execute("C:/scaps/sam2d/tools/sc_setup.exe") == -2)
     {
-        printOutputToUser("Cannot start sc_setup.exe");
+        printOutputToUser("Cannot start sc_setup.exe",OutputColor::ERROR);
     }
 }
 
 void MainWindow::on_startBtn_released()
 {
-    printOutputToUser("START!!!!");
-    mpScModule->startMarking(false);
+    printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::REPORT);
+    mpScModule->beginTaskMark();
+
 }
 
 void MainWindow::on_stopBtn_released()
 {
-    printOutputToUser("STOP!!!!!");
-    mpScModule->endMarking();
+    printOutputToUser("Procesul de marcare a taskurilor a fost oprit.",OutputColor::REPORT);
+    mpScModule->initializeDevice();
 }
 
 void MainWindow::on_alignBtn_released()
@@ -425,16 +506,17 @@ void MainWindow::on_alignBtn_released()
     if(!bIsAligning)
     {
         mpAlignTimer->setSingleShot(true);
-        mpAlignTimer->start(6000); //TODO: Change to 60000
-        printOutputToUser("A inceput alinierea.");
-        mpScModule->beginAlignment();
+        mpAlignTimer->start(60000);
+        printOutputToUser("A inceput alinierea.",OutputColor::REPORT);
+        mpScModule->markAlignment();
         bIsAligning = true;
     }
     else
     {
-        printOutputToUser("Aliniere in progres. Oprire aliniere.");
+        printOutputToUser("Aliniere in progres. Oprire aliniere.",OutputColor::REPORT);
         mpAlignTimer->stop();
-        mpScModule->endMarking();
+        mpScModule->initializeDevice();
+        bIsAligning = false;
     }
     if(!ui->startBtn->isEnabled())
     {
@@ -448,12 +530,12 @@ void MainWindow::on_align_done()
     if(bIsAligning)
     {
         bIsAligning = false;
-        printOutputToUser("Aliniere terminata.");
-        mpScModule->endMarking();
+        printOutputToUser("Aliniere terminata.",OutputColor::REPORT);
+        mpScModule->initializeDevice();
     }
 }
 
-void MainWindow::printOutputToUserSlot(QString qsMsg)
+void MainWindow::printOutputToUserSlot(QString qsMsg,OutputColor color)
 {
-    this->printOutputToUser(qsMsg);
+    this->printOutputToUser(qsMsg,color);
 }

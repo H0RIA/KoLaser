@@ -8,9 +8,12 @@ SCModule::SCModule()
     ,mCarrFile("D:/laser/scaps/sam2d/usc1/GAPHEAD _ F160_CVI_1064_ANALOG.ucf")
     ,mSettingsFile("D:/laser/scaps/sam2d/system/sc_light_settings.sam")
     ,mLaserMode(0)
+    ,mbAreSettingsLoaded(false)
     ,mLaserPort(0)
 {
     mbIsDeviceInitialized = false;
+    mbShouldAlign = true;
+
     mLaserPort = scComStandardDeviceMapLaserToPort2;
 
     loadLibrary("C:/Users/user/Documents/GitHub/KoLaser/sc_optic.dll");
@@ -111,10 +114,7 @@ bool SCModule::initializeDevice()
     device_mode = device_mode & ~scComStandardDeviceOperationModeIdCO2;
     device_mode = device_mode & ~scComStandardDeviceOperationModeIdLEE;
     device_mode = device_mode & ~scComStandardDeviceOperationModeIdYAG;
-    if (mLaserMode==SCI_LASER_YAG)
-        device_mode = device_mode | scComStandardDeviceOperationModeIdYAG;
-    else
-        device_mode = device_mode | scComStandardDeviceOperationModeIdCO2;
+    device_mode = device_mode | scComStandardDeviceOperationModeIdYAG;
 
     /* enable global standby
     */
@@ -161,8 +161,11 @@ bool SCModule::initializeDevice()
     result = SCSciSetDeviceMiscValue_d(scComStandardDeviceMiscEnableSendZCorr, 1);
     TREAT_RESULT("SCSciSetDeviceMiscValue_d", result);
 
+    result = SCSciSetContinuousMode(false);
+    TREAT_RESULT("SCSciSetContinuousMode",result);
+
     /* initialize the device
-                    */
+     */
     result = SCSciInitOptic();
     if (result != SC_OK)
     {
@@ -209,7 +212,7 @@ bool SCModule::initializeDevice()
 
     /* set laserport
                     */
-    result = SCSciSetDeviceMapLaserPort(mLaserPort);
+    result = SCSciSetDeviceMapLaserPort(scComStandardDeviceMapLaserToDA1);
     TREAT_RESULT("SCSciSetDeviceMapLaserPort", result);
 
     /* set axis state
@@ -220,7 +223,7 @@ bool SCModule::initializeDevice()
     TREAT_RESULT("SCSciSetAxisState", result);
 
     /* set defined state, no execution, laser off
-                    */
+     */
     result = SCSciSetExecute(0);
     TREAT_RESULT("SCSciSetExecute", result);
 
@@ -229,26 +232,82 @@ bool SCModule::initializeDevice()
 
     mbIsDeviceInitialized = true;
 
-    if(mbAreSettingsLoaded)
+    if(!mbAreSettingsLoaded)
     {
+        mbAreSettingsLoaded = true;
         result = SCSciLoadSettings(mSettingsFile.toLatin1().data());
         if(result != SC_OK)
         {
+            mbAreSettingsLoaded = false;
             emit printOutputToUser("Error loading settings file!");
+
+        }
+        else
+        {
+            emit printOutputToUser("Settings file loaded.");
         }
     }
-
+    emit printOutputToUser("Initializare laser terminata cu succes.");
     return true;
 }
 
-bool SCModule::beginMarking(int nTaskIndex, bool isAlignment)
+void SCModule::setDeviceSpeed()
 {
+    double jump_speed = 40000;    // relevant, unit in mm/s
+    // lets assume 50 kHz, we want to give two pulses each
+    double drill_time = 41; // in us
+    double result = 0;
+
+    result = SCSciSetDeviceSpeed(scComStandardDeviceStyleIDJumpSpeedFU, jump_speed);
+    TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOnDelay,1);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOffDelay,drill_time);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDJumpDelay, 10);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay,drill_time);
+    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+}
+
+void SCModule::checkExecution()
+{
+    long isExecuting = true;
+    long result = 0;
+
+    result = SCSciGetExecute(&isExecuting);
+    TREAT_RESULT("SCSciGetExecute",result);
+
+    if(!isExecuting)
+    {
+        result = SCSciSetExecute(0);
+        TREAT_RESULT("SCSciSetExecute",result);
+    }
+
+}
+/////////
+
+bool SCModule::checkFunction(void *pfunc, const QString func_name)
+{
+    bool isValid = true;
+    if(pfunc == 0)
+    {
+        isValid = false;
+    }
+    return isValid;
+}
+
+void SCModule::markAlignment()
+{
+    this->setDeviceSpeed();
+
     if(mbIsDeviceInitialized)
     {
-
-        long power, pulseLength;
         long device_flags;
-
         long result = 0;
 
         /* set style set
@@ -282,40 +341,169 @@ bool SCModule::beginMarking(int nTaskIndex, bool isAlignment)
         result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchLength,10); //TODO: ???????????/
         TREAT_RESULT("SCSciSetDeviceTimer",result);
 
-        result = SCSciSetContinuousMode(true);
-        TREAT_RESULT("SCSciSetContinuousMode",result);
+        if(mpProjectData->mPCBLaserPower != 0)
+        {
+            emit printOutputToUser("Atentie! Puterea laserului de aliniere e mai mare decat 0 !!!");
+        }
 
-        result = SCSciSetExternalTrigger(true);
-        TREAT_RESULT("SCSciSetExternalTrigger",result);
+        // calculate and set power and frequency values for YAG laser
+        result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,mpProjectData->mPCBLaserPower);
+        TREAT_RESULT("SCSciSetDevicePortValue",result);
 
-        result = SCSciSetExecute(true);
-        TREAT_RESULT("SCSciSetExecute",result);
+        result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/5*1e+6); //Hardcoded value. Shouldn't matter during alignment.
+        TREAT_RESULT("SCSciSetDeviceTimer",result);
+
 
         result = SCSciStreamInfo(scComControlStreamInfoIdentIdStart,-1,scComControlStreamInfoSequenceIdJob);
         TREAT_RESULT("SCSciStreamInfo",result);
 
-        if(!isAlignment)
-        {
-            // calculate and set power and frequency values for YAG laser
-            result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,mpProjectData->getTaskList()->at(nTaskIndex)->mLaserPower);
-            TREAT_RESULT("SCSciSetDevicePortValue",result);
+        long ident = scComControlStreamInfoIdentIdStart;
+        result = SCSciStreamInfo(ident,-1,scComControlStreamInfoSequenceIdMain);
 
-            result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/mpProjectData->getTaskList()->at(nTaskIndex)->mQFrequency*1e+6);
-            TREAT_RESULT("SCSciSetDeviceTimer",result);
-        }
-        else
+        result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, mpProjectData->mPCBLaserSpeed);
+        TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+        QList<Punct*>* pPcbList = mpProjectData->getPCBRute();
+
+        result = SCSciSetMoveLaserState(0);
+        TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+        int test_it = 0;
+        int i = 0;
+        bool bDoMarkingAlignment = false;
+
+        while(test_it < 1000)
         {
-            if(mpProjectData->mPCBLaserPower != 0)
+            Punct* pPoint = pPcbList->at(i);
+
+            result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
+            TREAT_RESULT("SCSciMoveAbs",result);
+
+            emit printOutputToUser(
+                        QString(
+                            "Adding PCB Point %1 with coordinates %2 and %3 to stream info."
+                            ).arg(i+1,pPoint->mX,pPoint->mY));
+
+            result = SCSciSetMoveLaserState(1);
+            TREAT_RESULT("SCSciSetMoveLaserState",result);
+            if(bDoMarkingAlignment)
             {
-                emit printOutputToUser("Atentie! Puterea laserului de aliniere e mai mare decat 0 !!!");
+                this->actuallyMarkTasks(true);
+                bDoMarkingAlignment = false;
             }
-            // calculate and set power and frequency values for YAG laser
-            result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,mpProjectData->mPCBLaserPower);
-            TREAT_RESULT("SCSciSetDevicePortValue",result);
+            if(i == pPcbList->count()-1)
+            {
+                i = 0;
 
-            result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/5*1e+6); //Hardcoded value. Shouldn't matter during alignment.
-            TREAT_RESULT("SCSciSetDeviceTimer",result);
+                bDoMarkingAlignment = true;
+            }
+            else i++;
+            test_it++;
         }
+
+        result = SCSciSetMoveLaserState(0);
+        TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+        result = SCSciMoveAbs(0.0,0.0);
+        TREAT_RESULT("SCSciMoveAbs",result);
+
+        /* signal stream start
+         */
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdMain);
+        TREAT_RESULT("SCSciStreamInfo",result);
+
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdJob);
+        TREAT_RESULT("SCSciStreamInfo",result);
+        /* if non continuous mode, start execution of the job now
+         */
+        result = SCSciSetExecute(1);
+        TREAT_RESULT("SCSciSetExecute",result);
+
+        /* flush remaining stream data and block until all commands have been executed -
+               will return immediately if set for external trigger or non continuous mode
+         */
+        result = SCSciFlush();
+        TREAT_RESULT("SCSciFlush",result);
+    }
+    else
+    {
+        emit printOutputToUser("ScModule Not initialized!!!");
+    }
+}
+
+void SCModule::beginTaskMark()
+{
+    if(mbIsDeviceInitialized)
+    {
+        this->setDeviceSpeed();
+
+        long device_flags;
+        long result = 0;
+
+        /* set style set
+        */
+        result = SCSciSetStyleSet(1);
+        TREAT_RESULT("SCSciSetStyleSet",result);
+
+        // configure delays (as on the pen settings page)
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay, 50);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDPolyDelay, 20);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDJumpDelay, 400);
+        TREAT_RESULT("SCSciSetDeviceDelay_d",result);
+
+        // set the speed for jumping, this value can also be modified within the stream
+        result = SCSciSetDeviceSpeed(scComStandardDeviceStyleIDJumpSpeedFU, 7600);
+        TREAT_RESULT("SCSciSetDeviceSpeed",result);
+
+        // enable the output port
+        result = SCSciGetDeviceEnableFlags(scComStandardDeviceEnableFlagGroupStyle,&device_flags);
+        TREAT_RESULT("SCSciSetDeviceEnableFlags",result);
+
+        device_flags|=scComStandardDeviceStyleFlagEnablePortLaser;
+
+        result = SCSciSetDeviceEnableFlags(scComStandardDeviceEnableFlagGroupStyle,device_flags);
+        TREAT_RESULT("SCSciSetDeviceEnableFlags",result);
+
+        result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchLength,10); //TODO: ???????????/
+        TREAT_RESULT("SCSciSetDeviceTimer",result);
+
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdStart,-1,scComControlStreamInfoSequenceIdJob);
+        TREAT_RESULT("SCSciStreamInfo",result);
+
+        long ident = scComControlStreamInfoIdentIdStart;
+        result = SCSciStreamInfo(ident,-1,scComControlStreamInfoSequenceIdMain);
+
+        this->actuallyMarkTasks(false);
+
+        result = SCSciSetMoveLaserState(0);
+        TREAT_RESULT("SCSciSetMoveLaserState",result);
+
+        result = SCSciMoveAbs(0.0,0.0);
+        TREAT_RESULT("SCSciMoveAbs",result);
+
+        /* signal stream start
+             */
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdMain);
+        TREAT_RESULT("SCSciStreamInfo",result);
+
+        result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdJob);
+        TREAT_RESULT("SCSciStreamInfo",result);
+        /* if non continuous mode, start execution of the job now
+             */
+        result = SCSciSetExecute(1);
+        TREAT_RESULT("SCSciSetExecute",result);
+
+        /* flush remaining stream data and block until all commands have been executed -
+                   will return immediately if set for external trigger or non continuous mode
+             */
+        result = SCSciFlush();
+        TREAT_RESULT("SCSciFlush",result);
+
+        //TODO: Check execution???
 
     }
     else
@@ -324,162 +512,55 @@ bool SCModule::beginMarking(int nTaskIndex, bool isAlignment)
     }
 }
 
-bool SCModule::startMarking(bool bIsAlignment)
+void SCModule::actuallyMarkTasks(bool isAlignment)
 {
-    long result = 0;
-    double jump_speed = 40000;    // relevant, unit in mm/s
-    // lets assume 50 kHz, we want to give two pulses each
-    double drill_time = 41; // in us
-
-    result = SCSciSetDeviceSpeed(scComStandardDeviceStyleIDJumpSpeedFU, jump_speed);
-    TREAT_RESULT("SCSciSetDeviceSpeed",result);
-
-    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOnDelay,1);
-    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
-
-    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDLaserOffDelay,drill_time);
-    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
-
-    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDJumpDelay, 10);
-    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
-
-    result = SCSciSetDeviceDelay_d(scComStandardDeviceStyleIDMarkDelay,drill_time);
-    TREAT_RESULT("SCSciSetDeviceDelay_d",result);
-
-    if(bIsAlignment)
+    double result = 0;
+    QList<Task*>* pTaskList = mpProjectData->getTaskList();
+    for(int i = 0; i < pTaskList->count(); i++)
     {
-        this->beginMarking(-1,bIsAlignment);
-        result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, mpProjectData->mPCBLaserSpeed);
-        TREAT_RESULT("SCSciSetDeviceSpeed",result);
-
-        QList<Punct*>* pPcbList = mpProjectData->getPCBRute();
-        for(int i = 0; i < pPcbList->count(); i++)
+        if(!isAlignment)
         {
-            Punct* pPoint = pPcbList->at(i);
+            // calculate and set power and frequency values for YAG laser
+            result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,mpProjectData->getTaskList()->at(i)->mLaserPower);
+            TREAT_RESULT("SCSciSetDevicePortValue",result);
 
-            result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
-            TREAT_RESULT("SCSciMoveAbs",result);
-
-            result = SCSciSetMoveLaserState(1);
-            TREAT_RESULT("SCSciSetMoveLaserState",result);
-        }
-        result = SCSciSetMoveLaserState(0);
-        TREAT_RESULT("SCSciSetMoveLaserState",result);
-
-        result = SCSciMoveAbs(0.0,0.0);
-        TREAT_RESULT("SCSciMoveAbs",result);
-    }
-    else
-    {
-        QList<Task*>* pTaskList = mpProjectData->getTaskList();
-        for(int i = 0; i < pTaskList->count(); i++)
-        {
-            this->beginMarking(i,bIsAlignment);
+            result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/mpProjectData->getTaskList()->at(i)->mQFrequency*1e+6);
+            TREAT_RESULT("SCSciSetDeviceTimer",result);
 
             result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, pTaskList->at(i)->mLaserSpeed);
             TREAT_RESULT("SCSciSetDeviceSpeed",result);
+        }
 
-            QList<Punct*>* pPointList = pTaskList->at(i)->getPointList();
-            for(int j = 0; j < pPointList->count(); j++)
+        QList<Punct*>* pPointList = pTaskList->at(i)->getPointList();
+        for(int j = 0; j < pPointList->count(); j++)
+        {
+            Punct* pPoint = pPointList->at(j);
+            if(pPoint)
             {
-                Punct* pPoint = pPointList->at(j);
-                if(pPoint)
+                if(pPoint->mOperatie == "S")
                 {
-                    if(pPoint->mOperatie == "S")
-                    {
-                        result = SCSciSetMoveLaserState(0);
-                        TREAT_RESULT("SCSciSetMoveLaserState",result);
-
-                        result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
-                        TREAT_RESULT("SCSciMoveAbs",result);
-                    }
-                    if(pPoint->mOperatie == "A")
-                    {
-                        result = SCSciSetMoveLaserState(1);
-                        TREAT_RESULT("SCSciSetMoveLaserState",result);
-
-                        result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
-                        TREAT_RESULT("SCSciMoveAbs",result);
-                    }
+                    result = SCSciSetMoveLaserState(0);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
                 }
-                result = SCSciSetMoveLaserState(0);
-                TREAT_RESULT("SCSciSetMoveLaserState",result);
+                if(pPoint->mOperatie == "A")
+                {
+                    result = SCSciSetMoveLaserState(1);
+                    TREAT_RESULT("SCSciSetMoveLaserState",result);
+                }
+                result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
+                TREAT_RESULT("SCSciMoveAbs",result);
+
+                emit printOutputToUser(QString("Se misca laserul %1 la punctul %2 al taskului %3 cu"
+                                               "coordonatele: %4 si %5").
+                                       arg(pPoint->mOperatie).arg(j+1).arg(i+1)
+                                       .arg(pPoint->mX).arg(pPoint->mY));
             }
             result = SCSciSetMoveLaserState(0);
             TREAT_RESULT("SCSciSetMoveLaserState",result);
-
-            result = SCSciMoveAbs(0.0,0.0);
-            TREAT_RESULT("SCSciMoveAbs",result);
         }
     }
-    return true;
 }
 
-bool SCModule::endMarking()
-{
-    long result = 0;
-    /* signal stream start
-        */
-    result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdMain);
-    TREAT_RESULT("SCSciStreamInfo",result);
-
-    result = SCSciStreamInfo(scComControlStreamInfoIdentIdEnd,-1,scComControlStreamInfoSequenceIdJob);
-    TREAT_RESULT("SCSciStreamInfo",result);
-    /* if non continuous mode, start execution of the job now
-        */
-    result = SCSciSetExecute(1);
-    TREAT_RESULT("SCSciSetExecute",result);
-
-    /* flush remaining stream data and block until all commands have been executed -
-           will return immediately if set for external trigger or non continuous mode
-        */
-    result = SCSciFlush();
-    TREAT_RESULT("SCSciFlush",result);
-
-    // check if external trigger is set
-    long isExternalTrigger;
-    result = SCSciGetExternalTrigger(&isExternalTrigger);
-
-    long isContinuousMode;
-    result = SCSciGetContinuousMode(&isContinuousMode);
-
-    if (!isContinuousMode && isExternalTrigger)
-    {
-        mpExecutionTimer->start(100);
-    }
-}
-
-bool SCModule::beginAlignment()
-{
-    this->startMarking(true);
-}
-
-void SCModule::checkExecution()
-{
-    long isExecuting = true;
-    long result = 0;
-
-    result = SCSciGetExecute(&isExecuting);
-    TREAT_RESULT("SCSciGetExecute",result);
-
-    if(!isExecuting)
-    {
-        result = SCSciSetExecute(0);
-        TREAT_RESULT("SCSciSetExecute",result);
-    }
-
-}
-/////////
-
-bool SCModule::checkFunction(void *pfunc, const QString func_name)
-{
-    bool isValid = true;
-    if(pfunc == 0)
-    {
-        isValid = false;
-    }
-    return isValid;
-}
 long SCModule::SCSciSetCardType(char *card_type){ return sc_sci_set_card_type(card_type); }
 long SCModule::SCSciInitInterface(void){ return sc_sci_init_interface(); }
 long SCModule::SCSciInitOptic(void){ return sc_sci_init_optic(); }
