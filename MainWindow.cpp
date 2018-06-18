@@ -288,7 +288,7 @@ int MainWindow::generateProjectData(QJsonDocument doc)
                printOutputToUser(QString("Punctul %1 din taskul %2 e definit gresit!").arg(j+1).arg(i+1),OutputColor::COLOR_ERROR);
                return result;
            }
-           for(int indexCoordonate = 0; indexCoordonate < coordonates.count(); indexCoordonate++)
+           for(int indexCoordonate; indexCoordonate < coordonates.count(); indexCoordonate++)
            {
                if (indexCoordonate < -50.00
                        || indexCoordonate > 50.00)
