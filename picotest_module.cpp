@@ -257,20 +257,21 @@ PicoTestModule::isInitialized()const
     return mInitialized;
 }
 
-void
+bool
 PicoTestModule::initialize()
 {
     mPicoLib = LoadLibraryA("visa32.dll");
     if(mPicoLib == nullptr){
         // Something went wrong
         qDebug() << "cannot load pico test library!";
-        return;
+        return false;
     }else{
         pico_load_dll_functions(mPicoLib);
     }
 
     memset(mBuffer, 0, PICO_BUFFER_SIZE);
     memset(mInstrDescriptor, 0, PICO_INSTR_DESCRIPTOR_SIZE);
+    return true;
 }
 
 void
