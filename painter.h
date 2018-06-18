@@ -20,7 +20,7 @@ enum Status
 
 enum OutputColor
 {
-    ERROR,
+    COLOR_ERROR,
     SUCCES,
     REPORT
 };
