@@ -336,16 +336,40 @@ int MainWindow::generateProjectData(QJsonDocument doc)
            return result;
        }
 
-       Task *pTask= new Task(array.at(i).toObject()["Tip_Task"].toString(),
+       QString sTipTask = array.at(i).toObject()["Tip_Task"].toString();
+
+       int nNrRRA = array.at(i).toObject()["NrRRA"].toString().toInt();
+       if(nNrRRA == 0)
+       {
+           printOutputToUser(QString("Valoarea RRA pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
+           return result;
+       }
+
+       int nNrRRD1 = array.at(i).toObject()["NrRRD1"].toString().toInt();
+       if(nNrRRD1 == 0 && sTipTask == "CIRCUIT DELTA")
+       {
+           printOutputToUser(QString("Valoarea RRD1 pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
+           return result;
+       }
+
+       int nNrRRD2 = array.at(i).toObject()["NrRRD2"].toString().toInt();
+       if(nNrRRD2 == 0 && sTipTask == "CIRCUIT DELTA")
+       {
+           printOutputToUser(QString("Valoarea RRD2 pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
+           return result;
+       }
+       qDebug() << nNrRRA << " " << nNrRRD1 << " " << nNrRRD2;
+
+       Task *pTask= new Task(sTipTask,
                              nLaserPower,
                              nLaserSpeed,
                              nLaserFrequency,
                              pPointList,
                              nTargetValue,
-                             array.at(i).toObject()["NrRRA"].toString().toInt(),
-                             array.at(i).toObject()["NrRRD1"].toString().toInt(),
-                             array.at(i).toObject()["NrRRD2"].toString().toInt());
-       ui->opTypeLineEdit->setText(array.at(i).toObject()["Tip_Task"].toString());
+                             nNrRRA,
+                             nNrRRD1,
+                             nNrRRD2);
+       ui->opTypeLineEdit->setText(sTipTask);
        mpProjectData->getTaskList()->append(pTask);
        if(mpProjectData->getTaskList()->count() < 1)
        {
