@@ -78,10 +78,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->flowControlCBox->addItem("No Flow Control");
     ui->rFeedbackLineEdit->setText("500.00");
 
+    //Timer signals and slots.
     connect(mpPicoTimer,SIGNAL(timeout()),this,SLOT(checkPicoHeartbeat()),Qt::AutoConnection);
     connect(mpCBTimer,SIGNAL(timeout()),this,SLOT(checkCbHeartbeat()),Qt::AutoConnection);
     connect(mpAlignTimer,SIGNAL(timeout()),SLOT(on_align_done()),Qt::AutoConnection);
 
+    //Printing output signals and slot.
     connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
     connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
 }
@@ -318,14 +320,16 @@ int MainWindow::generateProjectData(QJsonDocument doc)
            return result;
        }
 
-       int nLaserSpeed = jsonObj["Viteza"].toString().toInt();
+       int nLaserSpeed = array.at(i).toObject()["Viteza"].toString().toInt();
+       qDebug() << nLaserSpeed;
+
        if (nLaserSpeed < 0.1 || nLaserSpeed > 100)
        {
            printOutputToUser(QString("Viteza laserului pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
            return result;
        }
 
-       int nTargetValue = jsonObj["ValoareTinta"].toString().toInt();
+       int nTargetValue = array.at(i).toObject()["ValoareTinta"].toString().toInt();
        if (nTargetValue < 1 || nTargetValue > 1000000)
        {
            printOutputToUser(QString("Valoarea tinta a rezistentei pentru taskul %1 are o valoare incorecta!").arg(i+1),OutputColor::KOBER_ERROR);
@@ -403,7 +407,7 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::KOBER_ERROR);
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);
         }
-        mpPicoTimer->start(3000); //TODO: MODIFY TO 5 MINUTES.
+        mpPicoTimer->start(300000); //TODO: MODIFY TO 5 MINUTES.
 
         mbStatusCb = mpControlBoard->initializeDevice();
         if(mbStatusCb)
@@ -416,7 +420,7 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_ERROR);
             setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);
         }
-        mpCBTimer->start(3000);
+        mpCBTimer->start(300000);
     }
 }
 
