@@ -33,9 +33,8 @@ bool PicoModule::configureDevice()
 bool PicoModule::heartbeat()
 {
     //TODO: Check Heartbeat. Returning true for now.
-
-    double output = 0;
 #ifndef Q_OS_MACOS
+    double output = 0;
     if(!mpLibrary->readVoltage(&output))
     {
         emit printOutputToUser("Cannot read voltage!");
@@ -46,6 +45,8 @@ bool PicoModule::heartbeat()
         emit printOutputToUser(QString("Read value: %1").arg(output));
         bIsPicoModuleAlive = true;
     }
+#else
+    bIsPicoModuleAlive = true;
 #endif
     return bIsPicoModuleAlive;
 }
@@ -57,21 +58,22 @@ bool PicoModule::isPicoModuleAlive()
 
 bool PicoModule::readVoltage(double* pOutput)
 {
-    (pOutput);
 #ifndef Q_OS_MACOS
     if(mpLibrary->isInitialized())
     {
-        double output = 0;
-        if(!mpLibrary->readVoltage(&output))
+        if(!mpLibrary->readVoltage(pOutput))
         {
             emit printOutputToUser("Cannot read voltage!");
         }
         else
         {
-            emit printOutputToUser(QString("Read value: %1").arg(output));
+            emit printOutputToUser(QString("Read value: %1").arg(pOutput*));
         }
         return true;
     }
     return false;
+#else
+    *pOutput = 10;
+    emit printOutputToUser(QString("Test read value: %1").arg(*pOutput));
 #endif
 }
