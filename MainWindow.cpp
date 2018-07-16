@@ -141,18 +141,18 @@ void MainWindow::on_openFileBtn_released()
 }
 QString MainWindow::readJson(QString jsonFilePath)
 {
-    QString json = "";
-//    QFile file;
-//    file.setFileName(jsonFilePath);
-//    file.open(QIODevice::ReadOnly | QIODevice::Text);
-//    QString json = file.readAll();
+    QFile file;
+    file.setFileName(jsonFilePath);
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString json = file.readAll();
     if(json.isEmpty())
     {
+#ifdef Q_OS_MACOS
         //TEST ONLY
         json = "{"
                "\"Proiect\": \"Senzor Presiune 0 - 4 bari\","
                "\"PuterePCB\" : \"0\","
-               "\"VitezaPCB\" : \"300\","
+               "\"VitezaPCB\" : \"100\","
                "\"RutaPCB\" : [\"-9.500>10.000\", \"9.500>10.000\", \"9.500>-10.000\", \"-9.500>-10.000\", \"-9.500>10.000\", \"-9.500>10.000\"],"
                 "\"Tasks\" :"
                    "[{"
@@ -167,9 +167,11 @@ QString MainWindow::readJson(QString jsonFilePath)
                        "\"NrRRD2\" : \"NA\""
                    "}]"
                "}";
+#endif
     }
-    //file.close();
+    file.close();
 
+#ifdef Q_OS_MACOS
     ////////////////////////////////////
     //TEST Only. Don't need to check twice
     if(json.isEmpty())
@@ -178,6 +180,7 @@ QString MainWindow::readJson(QString jsonFilePath)
     }
     qDebug()<< "Loaded json:" << json;
     ////////////////////////////////////
+#endif
     return json;
 }
 int MainWindow::generateProjectData(QJsonDocument doc)
