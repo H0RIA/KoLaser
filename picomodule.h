@@ -30,7 +30,7 @@ public slots:
 private:
     PicoTestModule *mpLibrary;
 signals:
-        void printOutputToUser(QString);
+    void printOutputToUser(QString);
 
 };
 

@@ -4,11 +4,11 @@
 #include <QFileInfo>
 
 SCModule::SCModule()
-    :   mLaserLib(nullptr)
+    :      mbAreSettingsLoaded(false)
+    ,mLaserLib(nullptr)
     ,mCarrFile("D:/laser/scaps/sam2d/usc1/GAPHEAD _ F160_CVI_1064_ANALOG.ucf")
     ,mSettingsFile("D:/laser/scaps/sam2d/system/sc_light_settings.sam")
     ,mLaserMode(0)
-    ,mbAreSettingsLoaded(false)
     ,mLaserPort(0)
 {
     mbIsDeviceInitialized = false;
@@ -54,7 +54,7 @@ bool SCModule::loadLibrary(const QString &path)
 
     return false;
 #else
-    (path);
+    Q_UNUSED(path);
     return true;
 #endif
 }
@@ -297,6 +297,7 @@ bool SCModule::checkFunction(void *pfunc, const QString func_name)
     if(pfunc == 0)
     {
         isValid = false;
+        printOutputToUser(QString("Functia %1 nu e definita.").arg(func_name));
     }
     return isValid;
 }

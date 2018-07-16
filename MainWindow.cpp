@@ -467,11 +467,11 @@ void MainWindow::checkPicoHeartbeat()
 {
     if(mpPicoModule->heartbeat())
     {
-        printOutputToUser("PicoTest is alive and well",OutputColor::KOBER_REPORT);
+        printOutputToUser("Multimetrul este conectat.",OutputColor::KOBER_REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_SUCCESS);
     }
     else {
-        printOutputToUser("Poor Pico has died.",OutputColor::KOBER_ERROR);
+        printOutputToUser("Multimetrul a fost deconectat.",OutputColor::KOBER_ERROR);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);}
 }
 
@@ -479,11 +479,11 @@ void MainWindow::checkCbHeartbeat()
 {
     if(mpControlBoard->heartbeat())
     {
-        printOutputToUser("Control Board is alive and well",OutputColor::KOBER_REPORT);
+        printOutputToUser("Placa de control este conectata.",OutputColor::KOBER_REPORT);
         setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
     }
     else {
-        printOutputToUser("Poor CB has died.",OutputColor::KOBER_ERROR);
+        printOutputToUser("Placa de control a fost deconectata.",OutputColor::KOBER_ERROR);
         setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);}
 }
 
