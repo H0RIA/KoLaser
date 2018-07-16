@@ -9,7 +9,7 @@ QT       += serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = Laser
+TARGET = KoLaser
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -51,7 +51,9 @@ FORMS += \
         mainwindow.ui
 
 DISTFILES += \
-    ../../../../testDir/testProiect.txt
+    ../../../../testDir/testProiect.txt \
+    config.xml \
+    package.xml
 
 RESOURCES += \
     resources.qrc

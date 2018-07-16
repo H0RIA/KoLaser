@@ -13,16 +13,16 @@
 
 enum Status
 {
-    NOT_INITIALIZED,
-    SUCCESS,
-    FAILED
+    KOBER_NOT_INITIALIZED,
+    KOBER_SUCCESS,
+    KOBER_FAILED
 };
 
 enum OutputColor
 {
-    COLOR_ERROR,
-    SUCCES,
-    REPORT
+    KOBER_ERROR = -1,
+    KOBER_SUCCES = 0,
+    KOBER_REPORT = 1
 };
 
 class Painter

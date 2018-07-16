@@ -272,6 +272,7 @@ PicoTestModule::initialize()
 
     memset(mBuffer, 0, PICO_BUFFER_SIZE);
     memset(mInstrDescriptor, 0, PICO_INSTR_DESCRIPTOR_SIZE);
+
     return true;
 }
 
