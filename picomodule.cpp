@@ -57,6 +57,7 @@ bool PicoModule::isPicoModuleAlive()
 
 bool PicoModule::readVoltage(double* pOutput)
 {
+    (pOutput);
 #ifndef Q_OS_MACOS
     if(mpLibrary->isInitialized())
     {
