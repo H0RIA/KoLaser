@@ -72,7 +72,12 @@ bool SCModule::initializeDevice()
     long interface_version = 0;
 
     result = SCSciGetInterfaceVersion(&interface_version);
-    TREAT_RESULT("SCSciGetInterfaceVersion", result);
+    if(result != SC_OK)
+    {
+        emit printOutputToUser(QString("Initalizare laser esuata."));
+        TREAT_RESULT("SCSciGetInterfaceVersion", result);
+        return false;
+    }
 
     /*
      * initialize the interface
@@ -625,7 +630,14 @@ long SCModule::SCSciDevicePixelLine(float *PixelLine, long PixelCount, double dx
 long SCModule::SCSciSetSpeed(double Speed){ return sc_sci_set_speed(Speed); }
 long SCModule::SCSciGetSpeed(double *Speed){ return sc_sci_get_speed(Speed); }
 long SCModule::SCSciUpdateDeviceStyle(void){ return sc_sci_update_device_style(); }
-long SCModule::SCSciGetInterfaceVersion(long *Version){ return sc_sci_get_interface_version(Version); }
+long SCModule::SCSciGetInterfaceVersion(long *Version)
+{
+    if(sc_sci_get_interface_version != 0)
+    {
+        return sc_sci_get_interface_version(Version);
+    }
+    else return SC_ERROR;
+}
 long SCModule::SCSciGetDebugMode(long *Flags){ return sc_sci_get_debug_mode(Flags); }
 long SCModule::SCSciSetDebugMode(long Flags){ return sc_sci_set_debug_mode(Flags); }
 long SCModule::SCSciIsExposureEnd(long *Value){ return sc_sci_is_exposure_end(Value); }
