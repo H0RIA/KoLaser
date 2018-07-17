@@ -4,11 +4,11 @@
 #include <QFileInfo>
 
 SCModule::SCModule()
-    :   mLaserLib(nullptr)
+    :      mbAreSettingsLoaded(false)
+    ,mLaserLib(nullptr)
     ,mCarrFile("D:/laser/scaps/sam2d/usc1/GAPHEAD _ F160_CVI_1064_ANALOG.ucf")
     ,mSettingsFile("D:/laser/scaps/sam2d/system/sc_light_settings.sam")
     ,mLaserMode(0)
-    ,mbAreSettingsLoaded(false)
     ,mLaserPort(0)
 {
     mbIsDeviceInitialized = false;
@@ -54,7 +54,7 @@ bool SCModule::loadLibrary(const QString &path)
 
     return false;
 #else
-    (path);
+    Q_UNUSED(path);
     return true;
 #endif
 }
@@ -72,7 +72,12 @@ bool SCModule::initializeDevice()
     long interface_version = 0;
 
     result = SCSciGetInterfaceVersion(&interface_version);
-    TREAT_RESULT("SCSciGetInterfaceVersion", result);
+    if(result != SC_OK)
+    {
+        emit printOutputToUser(QString("Initalizare laser esuata."));
+        TREAT_RESULT("SCSciGetInterfaceVersion", result);
+        return false;
+    }
 
     /*
      * initialize the interface
@@ -297,6 +302,7 @@ bool SCModule::checkFunction(void *pfunc, const QString func_name)
     if(pfunc == 0)
     {
         isValid = false;
+        printOutputToUser(QString("Functia %1 nu e definita.").arg(func_name));
     }
     return isValid;
 }
@@ -624,7 +630,14 @@ long SCModule::SCSciDevicePixelLine(float *PixelLine, long PixelCount, double dx
 long SCModule::SCSciSetSpeed(double Speed){ return sc_sci_set_speed(Speed); }
 long SCModule::SCSciGetSpeed(double *Speed){ return sc_sci_get_speed(Speed); }
 long SCModule::SCSciUpdateDeviceStyle(void){ return sc_sci_update_device_style(); }
-long SCModule::SCSciGetInterfaceVersion(long *Version){ return sc_sci_get_interface_version(Version); }
+long SCModule::SCSciGetInterfaceVersion(long *Version)
+{
+    if(sc_sci_get_interface_version != 0)
+    {
+        return sc_sci_get_interface_version(Version);
+    }
+    else return SC_ERROR;
+}
 long SCModule::SCSciGetDebugMode(long *Flags){ return sc_sci_get_debug_mode(Flags); }
 long SCModule::SCSciSetDebugMode(long Flags){ return sc_sci_set_debug_mode(Flags); }
 long SCModule::SCSciIsExposureEnd(long *Value){ return sc_sci_is_exposure_end(Value); }

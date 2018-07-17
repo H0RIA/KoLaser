@@ -28,7 +28,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *e)
     {
-        (e);
+        Q_UNUSED(e);
         QPainter paint(this);
         QList<Punct*>* pPcbRute = mpProjectData->getPCBRute();
         for(int i = 1; i < pPcbRute->count() - 1; i++)

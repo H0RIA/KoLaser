@@ -8,7 +8,7 @@
 void* GetProcAddress( HMODULE,LPCSTR)
 {
     // TODO -> call only for windows
-
+    return 0;
 }
 #endif
 /*** DLL interface defintitions *****************************************/

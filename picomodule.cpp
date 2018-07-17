@@ -75,5 +75,6 @@ bool PicoModule::readVoltage(double* pOutput)
 #else
     *pOutput = 10;
     emit printOutputToUser(QString("Test read value: %1").arg(*pOutput));
+    return true;
 #endif
 }
