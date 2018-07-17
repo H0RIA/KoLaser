@@ -68,7 +68,7 @@ class SCModule : public QObject
         bool loadLibrary(const QString& path = QString());
         bool checkFunction(void *pfunc, const QString func_name);
         bool initializeDevice();
-
+        bool isDeviceInitialized() { return mbIsDeviceInitialized; }
         void markAlignment();
         void beginTaskMark();
         void setDeviceSpeed();

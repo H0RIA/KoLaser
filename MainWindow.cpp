@@ -538,6 +538,11 @@ void MainWindow::on_alignBtn_released()
 {
     if(!bIsAligning)
     {
+        if(!mpScModule->isDeviceInitialized())
+        {
+            printOutputToUser("Laserul nu a fost initializat!",OutputColor::KOBER_REPORT);
+            return;
+        }
         mpAlignTimer->setSingleShot(true);
         mpAlignTimer->start(60000);
         printOutputToUser("A inceput alinierea.",OutputColor::KOBER_REPORT);

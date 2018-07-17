@@ -309,10 +309,11 @@ bool SCModule::checkFunction(void *pfunc, const QString func_name)
 
 void SCModule::markAlignment()
 {
-    this->setDeviceSpeed();
 
     if(mbIsDeviceInitialized)
     {
+        this->setDeviceSpeed();
+
         long device_flags;
         long result = 0;
 
