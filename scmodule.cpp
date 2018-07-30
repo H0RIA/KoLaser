@@ -16,7 +16,7 @@ SCModule::SCModule()
 
     mLaserPort = scComStandardDeviceMapLaserToPort2;
 
-    loadLibrary("C:/Users/user/Documents/GitHub/KoLaser/sc_optic.dll");
+    loadLibrary("C:/Windows/SysWOW64/sc_optic.dll");
 
     mpExecutionTimer = new QTimer(this);
 
@@ -39,10 +39,10 @@ bool SCModule::loadLibrary(const QString &path)
 
     QFileInfo testFile(path);
     if (testFile.exists() && testFile.isFile()) {
-        mLaserLib = ::LoadLibraryA((path.toStdString().c_str()));
+        mLaserLib = LoadLibraryA((path.toStdString().c_str()));
         if(mLaserLib == nullptr){
-            DWORD dwError = ::GetLastError();
-            // Sa moara Jean... alert the user
+            DWORD dwError = GetLastError();
+            qDebug() << "LoadLibrary failed with " << dwError;
             dwError = 0;
             return false;
         }else{
