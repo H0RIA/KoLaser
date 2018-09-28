@@ -121,7 +121,7 @@ void MainWindow::on_openFileBtn_released()
     if(fileName.isEmpty())
     {
         //Test only. Make it non-empty.
-        fileName = "just_a_random_string";
+        fileName = "test change";
     }
     /////////////////
     if(!fileName.isEmpty())
