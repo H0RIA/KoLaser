@@ -32,6 +32,7 @@ public:
                             QSerialPort::FlowControl fc);
 private slots:
     void onControlBoardTimeout();
+    void readData();
 };
 
 #endif // CONTROLBOARDMODULE_H

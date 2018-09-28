@@ -10,13 +10,16 @@ ControlBoardModule::ControlBoardModule(QComboBox *pPortNameComboBox)
     mpPortNameComboBox = pPortNameComboBox;
     mpPortNameComboBox->addItem("Port Serial:");
 
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
-        mpPortNameComboBox->addItem(info.portName());
+    foreach (const QSerialPortInfo &info,
+             QSerialPortInfo::availablePorts()) {
+        if (!info.isBusy())
+        {
+            mpPortNameComboBox->addItem(info.portName());
+        }
     }
-
-    mpPortNameComboBox->addItem("Just a Test Port");
-
     QObject::connect(mpTimer,SIGNAL(timeout()),this,SLOT(onControlBoardTimeout()),Qt::AutoConnection);
+    QObject::connect(mpSerialPort,SIGNAL(readyRead()),this,SLOT(readData()));
+    mpSerialPort->open(QIODevice::ReadWrite);
 }
 
 ControlBoardModule::~ControlBoardModule()
@@ -31,28 +34,35 @@ ControlBoardModule::~ControlBoardModule()
         delete mpTimer;
         mpTimer = 0;
     }
+    if(mpSerialPort->isOpen())
+    {
+        mpSerialPort->close();
+    }
 }
 
 bool ControlBoardModule::initializeDevice()
 {
-    return true;
+    if(!mpSerialPort->isOpen())
+    {
+        mpSerialPort->open(QIODevice::ReadWrite);
+    }
     if(mpSerialPort->write(QString("?").toLatin1()) == -1)
     {
         //Error Message box
     }
-    if(mpSerialPort->waitForReadyRead(2000))
-    {
-        QByteArray array = mpSerialPort->read(2);
-        QString qResponse = QString().fromStdString(array.toStdString());
-        qDebug() << qResponse;
+//    if(mpSerialPort->waitForReadyRead(10000))
+//    {
+//        QByteArray array = mpSerialPort->read(2);
+//        QString qResponse = QString().fromStdString(array.toStdString());
+//        qDebug() << qResponse;
 
-        if(qResponse == "?NUL")
-        {
-            bControlBoardModuleAlive = true;
-        }
-    }
-    else { //TIMEOUT
-    }
+//        if(qResponse == "?NUL")
+//        {
+//            bControlBoardModuleAlive = true;
+//        }
+//    }
+//    else { //TIMEOUT
+ //   }
     return bControlBoardModuleAlive;
 }
 
@@ -62,7 +72,7 @@ void ControlBoardModule::onControlBoardTimeout()
 }
 bool ControlBoardModule::heartbeat()
 {
-    return bControlBoardModuleAlive = !bControlBoardModuleAlive;
+    return bControlBoardModuleAlive;
 }
 
 bool ControlBoardModule::saveSerialSettings(QString qPortName,
@@ -78,6 +88,14 @@ bool ControlBoardModule::saveSerialSettings(QString qPortName,
     mpSerialPort->setParity(p);
     mpSerialPort->setStopBits(sb);
     mpSerialPort->setFlowControl(fc);
-
+    initializeDevice();
     return true;
+}
+
+void ControlBoardModule::readData()
+{
+    const QByteArray data = mpSerialPort->readAll();
+    QString DataAsString =
+    QString::fromUtf8(data);
+    qDebug() << DataAsString;
 }

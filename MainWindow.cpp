@@ -433,17 +433,18 @@ void MainWindow::validProjectLoaded(bool bValidProject)
         }
         mpPicoTimer->start(300000); //TODO: MODIFY TO 5 MINUTES.
 
-        mbStatusCb = mpControlBoard->initializeDevice();
-        if(mbStatusCb)
-        {
-            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::KOBER_SUCCES);
-            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
-        }
-        else
-        {
-            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_ERROR);
-            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);
-        }
+        //mbStatusCb = mpControlBoard->initializeDevice();
+
+//        if(mbStatusCb)
+//        {
+//            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::KOBER_SUCCES);
+//            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
+//        }
+//        else
+//        {
+//            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_ERROR);
+//            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);
+//        }
         mpCBTimer->start(300000);
     }
 }

@@ -14,13 +14,8 @@ PicoModule::~PicoModule()
 
 bool PicoModule::initializeDevice()
 {
-#ifndef Q_OS_MACOS
     bIsPicoModuleAlive = mpLibrary->initialize();
-
     return mpLibrary->isInitialized();
-#endif
-    //Stub true for MacOS.
-    return true;
 }
 
 bool PicoModule::configureDevice()

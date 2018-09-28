@@ -94,7 +94,7 @@ bool SCModule::initializeDevice()
      * specify the path to the correction file
     */
     result = SCSciSetDevicePath(0,mCarrFile.toLatin1().data());
-    qDebug() << mCarrFile.toLatin1().data();
+    qDebug() << "Path to correction file " << mCarrFile.toLatin1().data();
     if (result != SC_OK)
     {
         QString strError = QString("SCSciSetDevicePath returned %1").arg(result);
@@ -120,7 +120,7 @@ bool SCModule::initializeDevice()
     device_mode = device_mode & ~scComStandardDeviceOperationModeIdLEE;
     device_mode = device_mode & ~scComStandardDeviceOperationModeIdYAG;
     device_mode = device_mode | scComStandardDeviceOperationModeIdYAG;
-
+//////////////////////////////////////////
     /* enable global standby
     */
     device_mode = device_mode | scComStandardDeviceOperationModeEnableStandBy;
@@ -244,12 +244,11 @@ bool SCModule::initializeDevice()
         if(result != SC_OK)
         {
             mbAreSettingsLoaded = false;
-            emit printOutputToUser("Error loading settings file!");
-
+            emit printOutputToUser("Fisierul de setari nu a fost incarcat!!");
         }
         else
         {
-            emit printOutputToUser("Settings file loaded.");
+            emit printOutputToUser("Fisierul de setari a fost incarcat.");
         }
     }
     emit printOutputToUser("Initializare laser terminata cu succes.");
@@ -510,8 +509,16 @@ void SCModule::beginTaskMark()
         result = SCSciFlush();
         TREAT_RESULT("SCSciFlush",result);
 
-        //TODO: Check execution???
-
+        long is_executing, ext_trigger;
+            SCSciGetExecute(&is_executing);
+            SCSciGetExternalTriggerCount(&ext_trigger);
+            while(is_executing)
+            {
+                Sleep(1);
+                SCSciGetExecute(&is_executing);
+                SCSciGetExternalTriggerCount(&ext_trigger);
+            }
+            SCSciInitOptic();
     }
     else
     {
