@@ -84,8 +84,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mpAlignTimer,SIGNAL(timeout()),SLOT(on_align_done()),Qt::AutoConnection);
 
     //Printing output signals and slot.
-    connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
-    connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),this,SLOT(printOutputToUserSlot(QString)),Qt::AutoConnection);
+    connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),
+            this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
+    connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),
+            this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
 }
 
 MainWindow::~MainWindow()
@@ -491,7 +493,7 @@ void MainWindow::on_saveSerialSettings_released()
     {
         mpControlBoard->saveSerialSettings(ui->portNameCBox->currentText(),QSerialPort::Baud9600,QSerialPort::Data8,
                                            QSerialPort::NoParity,QSerialPort::OneStop,QSerialPort::NoFlowControl);
-        printOutputToUser("Talking to Serial Port " + ui->portNameCBox->currentText(),OutputColor::KOBER_COLOR_REPORT);
+        printOutputToUser("Aplicatia asculta la portul: " + ui->portNameCBox->currentText(),OutputColor::KOBER_COLOR_REPORT);
     }
 }
 
@@ -499,7 +501,7 @@ void MainWindow::on_btnLaserSettings_released()
 {
     if (QProcess::execute("C:/scaps/sam2d/tools/sc_setup.exe") == -2)
     {
-        printOutputToUser("Cannot start sc_setup.exe",OutputColor::KOBER_COLOR_ERROR);
+        printOutputToUser("Aplicatia pentru setat laserul nu a putut fi lansata!",OutputColor::KOBER_COLOR_ERROR);
     }
 }
 

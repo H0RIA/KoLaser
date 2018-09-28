@@ -8,6 +8,7 @@
 #include"stubs_from_windows.h"
 #include"sci_dll_functions.h"
 #include"projectdata.h"
+#include"painter.h"
 
 #define LIBRARY_FILE_NAME_RELEASE   "sc_optic.dll"
 #define LIBRARY_FILE_NAME_DEBUG     "sc_optic_d.dll"
@@ -34,7 +35,7 @@ typedef void* HMODULE;
     if (res != SC_OK)\
     {\
         QString strError = QString("%1 returned %2").arg(fnName).arg(res);\
-        emit printOutputToUser(strError);\
+        emit printOutputToUser(strError,OutputColor::KOBER_COLOR_ERROR);\
     }
 #endif // !TREAT_RESULT
 
@@ -150,7 +151,7 @@ class SCModule : public QObject
 private slots:
         void checkExecution();
 signals:
-        void printOutputToUser(QString);
+        void printOutputToUser(QString, OutputColor);
 };
 
 #endif // SCMODULE_H

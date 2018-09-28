@@ -74,7 +74,7 @@ bool SCModule::initializeDevice()
     result = SCSciGetInterfaceVersion(&interface_version);
     if(result != SC_OK)
     {
-        emit printOutputToUser(QString("Initalizare laser esuata."));
+        emit printOutputToUser(QString("Initalizare laser esuata."), OutputColor::KOBER_COLOR_ERROR);
         TREAT_RESULT("SCSciGetInterfaceVersion", result);
         return false;
     }
@@ -86,7 +86,7 @@ bool SCModule::initializeDevice()
     if (result != SC_OK)
     {
         QString strError = QString("SCSciInitInterface returned %1").arg(result);
-        emit printOutputToUser(strError);
+        emit printOutputToUser(strError, OutputColor::KOBER_COLOR_ERROR);
         return false;
     }
 
@@ -98,7 +98,7 @@ bool SCModule::initializeDevice()
     if (result != SC_OK)
     {
         QString strError = QString("SCSciSetDevicePath returned %1").arg(result);
-        emit printOutputToUser(strError);
+        emit printOutputToUser(strError, OutputColor::KOBER_COLOR_ERROR);
     }
 
     /* disable simulation and hide the marking output window
@@ -107,7 +107,7 @@ bool SCModule::initializeDevice()
     if (result != SC_OK)
     {
         QString strError = QString("SCSciGetDeviceOperationMode returned %1").arg(result);
-        emit printOutputToUser(strError);
+        emit printOutputToUser(strError, OutputColor::KOBER_COLOR_ERROR);
     }
 
     device_mode = device_mode & ~scComStandardDeviceOperationModeSimulation;
@@ -174,7 +174,7 @@ bool SCModule::initializeDevice()
     result = SCSciInitOptic();
     if (result != SC_OK)
     {
-        emit printOutputToUser("Initialization failed!");
+        emit printOutputToUser("Initialization failed!", OutputColor::KOBER_COLOR_ERROR);
         return false;
     }
 
@@ -244,14 +244,17 @@ bool SCModule::initializeDevice()
         if(result != SC_OK)
         {
             mbAreSettingsLoaded = false;
-            emit printOutputToUser("Fisierul de setari nu a fost incarcat!!");
+            emit printOutputToUser("Fisierul de setari nu a fost incarcat!!",
+                                   OutputColor::KOBER_COLOR_ERROR);
         }
         else
         {
-            emit printOutputToUser("Fisierul de setari a fost incarcat.");
+            emit printOutputToUser("Fisierul de setari a fost incarcat.",
+                                   OutputColor::KOBER_COLOR_ERROR);
         }
     }
-    emit printOutputToUser("Initializare laser terminata cu succes.");
+    emit printOutputToUser("Initializare laser terminata cu succes.",
+                           OutputColor::KOBER_COLOR_ERROR);
     return true;
 }
 
@@ -301,7 +304,7 @@ bool SCModule::checkFunction(void *pfunc, const QString func_name)
     if(pfunc == 0)
     {
         isValid = false;
-        printOutputToUser(QString("Functia %1 nu e definita.").arg(func_name));
+        printOutputToUser(QString("Functia %1 nu e definita.").arg(func_name), OutputColor::KOBER_COLOR_ERROR);
     }
     return isValid;
 }
@@ -349,7 +352,7 @@ void SCModule::markAlignment()
 
         if(mpProjectData->mPCBLaserPower != 0)
         {
-            emit printOutputToUser("Atentie! Puterea laserului de aliniere e mai mare decat 0 !!!");
+            emit printOutputToUser("Atentie! Puterea laserului de aliniere e mai mare decat 0 !!!", OutputColor::KOBER_COLOR_ERROR);
         }
 
         // calculate and set power and frequency values for YAG laser
@@ -388,7 +391,7 @@ void SCModule::markAlignment()
             emit printOutputToUser(
                         QString(
                             "Adding PCB Point %1 with coordinates %2 and %3 to stream info."
-                            ).arg(i+1,pPoint->mX,pPoint->mY));
+                            ).arg(i+1,pPoint->mX,pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
 
             result = SCSciSetMoveLaserState(1);
             TREAT_RESULT("SCSciSetMoveLaserState",result);
@@ -433,7 +436,7 @@ void SCModule::markAlignment()
     }
     else
     {
-        emit printOutputToUser("ScModule Not initialized!!!");
+        emit printOutputToUser("ScModule Not initialized!!!", OutputColor::KOBER_COLOR_ERROR);
     }
 }
 
@@ -522,7 +525,7 @@ void SCModule::beginTaskMark()
     }
     else
     {
-        emit printOutputToUser("ScModule Not initialized!!!");
+        emit printOutputToUser("ScModule Not initialized!!!", OutputColor::KOBER_COLOR_ERROR);
     }
 }
 
@@ -567,7 +570,7 @@ void SCModule::actuallyMarkTasks(bool isAlignment)
                 emit printOutputToUser(QString("Se misca laserul %1 la punctul %2 al taskului %3 cu"
                                                "coordonatele: %4 si %5").
                                        arg(pPoint->mOperatie).arg(j+1).arg(i+1)
-                                       .arg(pPoint->mX).arg(pPoint->mY));
+                                       .arg(pPoint->mX).arg(pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
             }
             result = SCSciSetMoveLaserState(0);
             TREAT_RESULT("SCSciSetMoveLaserState",result);
