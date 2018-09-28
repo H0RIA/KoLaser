@@ -48,7 +48,6 @@ bool PicoModule::isPicoModuleAlive()
 
 bool PicoModule::readVoltage(double* pOutput)
 {
-#ifndef Q_OS_MACOS
     if(mpLibrary->isInitialized())
     {
         if(!mpLibrary->readVoltage(pOutput))
@@ -62,9 +61,4 @@ bool PicoModule::readVoltage(double* pOutput)
         return true;
     }
     return false;
-#else
-    *pOutput = 10;
-    emit printOutputToUser(QString("Test read value: %1").arg(*pOutput));
-    return true;
-#endif
 }
