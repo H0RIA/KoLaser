@@ -27,8 +27,6 @@ bool PicoModule::configureDevice()
 
 bool PicoModule::heartbeat()
 {
-    //TODO: Check Heartbeat. Returning true for now.
-#ifndef Q_OS_MACOS
     double output = 0;
     if(!mpLibrary->readVoltage(&output))
     {
@@ -40,9 +38,6 @@ bool PicoModule::heartbeat()
         emit printOutputToUser(QString("Read value: %1").arg(output));
         bIsPicoModuleAlive = true;
     }
-#else
-    bIsPicoModuleAlive = true;
-#endif
     return bIsPicoModuleAlive;
 }
 
