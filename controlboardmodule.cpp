@@ -6,6 +6,10 @@ ControlBoardModule::ControlBoardModule(QComboBox *pPortNameComboBox)
 
     mpSerialPort = new QSerialPort();
     mpTimer = new QTimer();
+    mpResponseTimer = new QTimer();
+    mpResponseTimer->setSingleShot(true);
+
+    isExpectingRequestToTrimResponse = false;
 
     mpPortNameComboBox = pPortNameComboBox;
     mpPortNameComboBox->addItem("Port Serial:");
@@ -19,7 +23,8 @@ ControlBoardModule::ControlBoardModule(QComboBox *pPortNameComboBox)
     }
     QObject::connect(mpTimer,SIGNAL(timeout()),this,SLOT(onControlBoardTimeout()),Qt::AutoConnection);
     QObject::connect(mpSerialPort,SIGNAL(readyRead()),this,SLOT(readData()));
-    mpSerialPort->open(QIODevice::ReadWrite);
+
+    connect(mpResponseTimer,SIGNAL(timeout()),this,SLOT(requestTimeout()),Qt::AutoConnection);
 }
 
 ControlBoardModule::~ControlBoardModule()
@@ -40,21 +45,24 @@ ControlBoardModule::~ControlBoardModule()
     }
 }
 
-bool ControlBoardModule::initializeDevice()
+void ControlBoardModule::initializeDevice()
 {
     qDebug() << "Sending request to Cb";
     if(!mpSerialPort->isOpen())
     {
-        mpSerialPort->open(QIODevice::ReadWrite);
+       if (mpSerialPort->open(QIODevice::ReadWrite))
+       {
+           qDebug() << "Opened serial port " << mpSerialPort->portName();
+       }
     }
     if (mpSerialPort->isOpen())
     {
         qDebug() << "Writing ? to serial";
         mpSerialPort->write(QString("?").toLatin1());
+        mpTimer->setSingleShot(true);
+        mpTimer->start(10000);
     }
-    mpTimer->setSingleShot(true);
-    mpTimer->start(10000);
-    return bControlBoardModuleAlive;
+    else { qDebug() << "Port is not open! Cannot initialize Device"; }
 }
 
 void ControlBoardModule::onControlBoardTimeout()
@@ -64,7 +72,8 @@ void ControlBoardModule::onControlBoardTimeout()
 }
 bool ControlBoardModule::heartbeat()
 {
-    return initializeDevice();
+    initializeDevice();
+    return true;
 }
 
 bool ControlBoardModule::saveSerialSettings(QString qPortName,
@@ -74,6 +83,10 @@ bool ControlBoardModule::saveSerialSettings(QString qPortName,
                                             QSerialPort::StopBits sb,
                                             QSerialPort::FlowControl fc)
 {
+    if(mpSerialPort->isOpen())
+    {
+        mpSerialPort->close();
+    }
     mpSerialPort->setPortName(qPortName);
     mpSerialPort->setBaudRate(br);
     mpSerialPort->setDataBits(db);
@@ -90,6 +103,20 @@ void ControlBoardModule::readData()
     QString DataAsString =QString::fromUtf8(data);
     QString qResponse = QString().fromStdString(data.toStdString());
     qDebug() << qResponse;
+    if(isExpectingRequestToTrimResponse && data.at(0) == 'R')
+    {
+        //It might be request to trim response. TReat it.
+        qDebug() << QString::fromStdString(data.right(3).toStdString()); //Vconst
+        mpResponseTimer->stop();
+
+        unsigned mask = 0;
+        for (unsigned i=0; i<=20; i++) mask |= 1 << i;
+        unsigned Vconst = ( mask & data.right(3).toInt()) * Ulsbdac;
+
+        qDebug() << Vconst;
+
+        isExpectingRequestToTrimResponse = false;
+    }
     if(qResponse == "?NUL")
     {
         emit reportStatus(true);
@@ -97,9 +124,30 @@ void ControlBoardModule::readData()
     }
     else
     {
-        if(data.at(1) != QString("0")) {
+        if(data.at(1) != '0') {
             emit reportStatus(false);
             bControlBoardModuleAlive = false;
         }
     }
+}
+
+void ControlBoardModule::requestToMeasure(int id1, int id2, int id3)
+{
+    if (id3 == -1) //Disable tester id 3
+    {
+        if (mpSerialPort->isOpen())
+        {
+            QString request = QString ("M %1 %2").arg(id1).arg(id2);
+            qDebug() << request;
+            mpSerialPort->write(request.toLatin1());
+            mpResponseTimer->start(10000);
+            isExpectingRequestToTrimResponse = true;
+        }
+    }
+}
+
+void ControlBoardModule::requestTimeout()
+{
+    //TODO: ABANDON EVERYTHING;
+
 }

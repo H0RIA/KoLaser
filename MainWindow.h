@@ -35,10 +35,13 @@ private:
     QTimer *mpPicoTimer;
     QTimer *mpCBTimer;
     QTimer *mpAlignTimer;
+    QTimer* mpOptoInTimer;
 
     bool bIsAligning;
     bool mbStatusPico;
     bool mbStatusCb;
+
+    int currentTaskIndex;
 
     QString readJson(QString jsonFilePath);
     int generateProjectData(QJsonDocument);
@@ -46,6 +49,7 @@ private:
     void validProjectLoaded(bool);
     void setStatusOnButton(QLabel *pLabel, Status bStatus);
     void printOutputToUser(QString qsMsg, OutputColor color);
+    bool getOptoInValues();
 
 private slots:
     void on_openFileBtn_released();
@@ -60,6 +64,7 @@ private slots:
     void on_align_done();
     void printOutputToUserSlot(QString qsMsg, OutputColor color);
     void reportCbStatusSlot(bool isCbAlive);
+    void checkOptoInStatusSlot();
 };
 
 #endif // MAINWINDOW_H

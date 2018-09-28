@@ -74,6 +74,7 @@ Task::Task(QString op, int pd, int v,int f,QList<Punct*> *pList,int vt,int rra,i
     NrRRA = rra;
     NrRRD1 = rrd1;
     NrRRD2 = rrd2;
+    isDone = false;
 }
 Task::~Task()
 {

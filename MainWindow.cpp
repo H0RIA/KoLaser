@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mpPicoTimer = new QTimer(this);
     mpCBTimer = new QTimer(this);
     mpAlignTimer = new QTimer(this);
+    mpOptoInTimer = new QTimer(this);
 
     ui->projectNameLabel->setText("Nume proiect:");
     ui->projectNameLineEdit->setReadOnly(true);
@@ -82,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mpPicoTimer,SIGNAL(timeout()),this,SLOT(checkPicoHeartbeat()),Qt::AutoConnection);
     connect(mpCBTimer,SIGNAL(timeout()),this,SLOT(checkCbHeartbeat()),Qt::AutoConnection);
     connect(mpAlignTimer,SIGNAL(timeout()),SLOT(on_align_done()),Qt::AutoConnection);
-
+    connect(mpOptoInTimer,SIGNAL(timeout()),SLOT(checkOptoInStatusSlot()), Qt::AutoConnection);
     //Printing output signals and slot.
     connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),
             this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
@@ -401,6 +402,7 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_FAILED);
         }
         mpPicoTimer->start(15000);
+        mpOptoInTimer->start(100);
     }
 }
 
@@ -424,7 +426,8 @@ void MainWindow::checkPicoHeartbeat()
     double pOutput = 0;
     if(mpPicoModule->heartbeat(&pOutput))
     {
-        printOutputToUser("Multimetrul este conectat.",OutputColor::KOBER_COLOR_REPORT);
+        printOutputToUser(QString("Multimetrul este conectat is are valoarea:%1.").arg(pOutput),
+                          OutputColor::KOBER_COLOR_REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_SUCCESS);
         mbStatusPico = true;
     }
@@ -484,10 +487,27 @@ void MainWindow::on_btnLaserSettings_released()
 
 void MainWindow::on_startBtn_released()
 {
-    if (this->mbStatusPico && mbStatusCb)
+    //Get turrent task index
+    for(int i = 0; i < mpProjectData->getTaskList()->count(); i++)
     {
+        if (!mpProjectData->getTaskList()->at(i)->isDone)
+        {
+            currentTaskIndex = i;
+            break;
+        }
+    }
+    if (this->mbStatusPico && mbStatusCb && getOptoInValues())
+    {
+        if (mbStatusCb)
+        {
+            mpControlBoard->requestToMeasure(mpProjectData->getTaskList()->at(currentTaskIndex)->NrRRA,
+                                             mpProjectData->getTaskList()->at(currentTaskIndex)->NrRRD1,
+                                             mpProjectData->getTaskList()->at(currentTaskIndex)->NrRRD2);
+        }
+
         printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_COLOR_REPORT);
         mpScModule->beginTaskMark();
+        ui->startBtn->setEnabled(false);
     }
     else {
         if (!mbStatusCb)
@@ -563,4 +583,15 @@ void MainWindow::reportCbStatusSlot(bool isCbAlive)
         printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_COLOR_ERROR);
         setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_FAILED);
     }
+}
+
+bool MainWindow::getOptoInValues()
+{
+    //TODO: Check OptoinValues
+    return true;
+}
+
+void MainWindow::checkOptoInStatusSlot()
+{
+    getOptoInValues();
 }

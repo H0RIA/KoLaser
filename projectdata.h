@@ -28,6 +28,7 @@ public:
     int NrRRA;
     int NrRRD1;
     int NrRRD2;
+    bool isDone;
 public:
     Task(QString, int, int, int, QList<Punct*> *, int, int, int, int);
     ~Task();

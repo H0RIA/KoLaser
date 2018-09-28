@@ -39,9 +39,6 @@ bool PicoModule::heartbeat(double* pOutput)
     }
     else
     {
-        emit printOutputToUser(
-                    QString("Multimetrul este contectat si a citit valoarea %1").arg(QString::number(*pOutput)),
-                    OutputColor::KOBER_COLOR_REPORT);
         bIsPicoModuleAlive = true;
     }
     return bIsPicoModuleAlive;

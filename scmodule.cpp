@@ -253,8 +253,6 @@ bool SCModule::initializeDevice()
                                    OutputColor::KOBER_COLOR_ERROR);
         }
     }
-    emit printOutputToUser("Initializare laser terminata cu succes.",
-                           OutputColor::KOBER_COLOR_ERROR);
     return true;
 }
 
@@ -388,10 +386,10 @@ void SCModule::markAlignment()
             result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
             TREAT_RESULT("SCSciMoveAbs",result);
 
-            emit printOutputToUser(
-                        QString(
-                            "Adding PCB Point %1 with coordinates %2 and %3 to stream info."
-                            ).arg(i+1,pPoint->mX,pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
+//            emit printOutputToUser(
+//                        QString(
+//                            "Adding PCB Point %1 with coordinates %2 and %3 to stream info."
+//                            ).arg(i+1,pPoint->mX,pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
 
             result = SCSciSetMoveLaserState(1);
             TREAT_RESULT("SCSciSetMoveLaserState",result);
@@ -567,10 +565,10 @@ void SCModule::actuallyMarkTasks(bool isAlignment)
                 result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
                 TREAT_RESULT("SCSciMoveAbs",result);
 
-                emit printOutputToUser(QString("Se misca laserul %1 la punctul %2 al taskului %3 cu"
-                                               "coordonatele: %4 si %5").
-                                       arg(pPoint->mOperatie).arg(j+1).arg(i+1)
-                                       .arg(pPoint->mX).arg(pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
+//                emit printOutputToUser(QString("Se misca laserul %1 la punctul %2 al taskului %3 cu"
+//                                               "coordonatele: %4 si %5").
+//                                       arg(pPoint->mOperatie).arg(j+1).arg(i+1)
+//                                       .arg(pPoint->mX).arg(pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
             }
             result = SCSciSetMoveLaserState(0);
             TREAT_RESULT("SCSciSetMoveLaserState",result);
