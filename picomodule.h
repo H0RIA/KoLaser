@@ -21,7 +21,7 @@ public:
 
 public slots:
     bool readVoltage(double* output);
-
+    void reportLibraryErrorSlot(QString qMsg);
 private:
     PicoTestModule *mpLibrary;
 signals:

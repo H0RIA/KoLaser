@@ -2,7 +2,9 @@
 #define PICOTEST_MODULE_H
 
 #include "./visa.h"
+
 #include <Qt>
+#include<QObject>
 
 #ifndef Q_OS_MACOS
 #include "windows.h"
@@ -29,8 +31,9 @@ extern dll_PviSetAttribute_usb      PviSetAttribute_usb;
 #define COMMAND_BUFFER_SIZE         64
 #define RESPONSE_BUFFER_SIZE        64
 
-class PicoTestModule
+class PicoTestModule : public QObject
 {
+    Q_OBJECT
     public:
         PicoTestModule();
         virtual ~PicoTestModule();
@@ -80,6 +83,8 @@ class PicoTestModule
         char            mInstrDescriptor[PICO_INSTR_DESCRIPTOR_SIZE];
         int             mTimeout;
         bool            mInitialized;
+signals:
+        void reportErrorSignal(QString qMsg);
 };
 #endif
 #endif // PICOTEST_MODULE_H

@@ -6,6 +6,9 @@ PicoModule::PicoModule()
 {
     bIsPicoModuleAlive = false;
     mpLibrary = new PicoTestModule();
+
+    connect(mpLibrary,SIGNAL(reportErrorSignal(QString)),
+            this,SLOT(reportLibraryErrorSlot(QString)),Qt::AutoConnection);
 }
 PicoModule::~PicoModule()
 {
@@ -58,4 +61,9 @@ bool PicoModule::readVoltage(double* pOutput)
         return true;
     }
     return false;
+}
+
+void PicoModule::reportLibraryErrorSlot(QString qMsg)
+{
+    emit printOutputToUser(qMsg,OutputColor::KOBER_COLOR_ERROR);
 }

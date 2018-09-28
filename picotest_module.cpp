@@ -92,6 +92,7 @@ long
 PicoTestModule::OpenDefaultRMUsb(unsigned long *vi)
 {
     if(PviOpenDefaultRM_usb == nullptr){
+        emit reportErrorSignal("PviOpenDefaultRM_usb nu a fost initalizat!");
         qDebug() << "PviOpenDefaultRM_usb not initialized";
         return -1;
     }
@@ -107,6 +108,7 @@ PicoTestModule::FindRsrcUsb( unsigned long sesn,
                   char far desc[])
 {
     if(PviFindRsrc_usb == nullptr){
+        emit reportErrorSignal("PviFindRsrc_usb nu a fost initalizat!");
         qDebug() << "PviFindRsrc_usb not initialized";
         return -1;
     }
@@ -123,6 +125,7 @@ PicoTestModule::OpenUsb(unsigned long sesn,
              unsigned long *vi)
 {
     if(PviOpen_usb == nullptr){
+        emit reportErrorSignal("PviOpen_usb nu a fost initalizat!");
         qDebug() << "PviOpen_usb not initialized";
         return -1;
     }
@@ -134,6 +137,7 @@ long
 PicoTestModule::CloseUsb(unsigned long vi)
 {
     if(PviClose_usb == nullptr){
+        emit reportErrorSignal("PviClose_usb nu a fost initalizat!");
         qDebug() << "PviClose_usb not initialized";
         return -1;
     }
@@ -148,6 +152,7 @@ PicoTestModule::WriteUsb(unsigned long vi,
               unsigned long *retval)
 {
     if(PviWrite_usb == nullptr){
+        emit reportErrorSignal("PviWrite_usb nu a fost initializat!");
         qDebug() << "PviWrite_usb not initialized";
         return -1;
     }
@@ -163,6 +168,7 @@ PicoTestModule::ReadUsb(unsigned long vi,
              unsigned long *retval)
 {
     if(PviRead_usb == nullptr){
+        emit reportErrorSignal("PviRead_usb nu a fost initializat!");
         qDebug() << "PviRead_usb not initialized";
         return -1;
     }
@@ -176,6 +182,7 @@ PicoTestModule::SetAttributeUsb(unsigned long vi,
                      unsigned long attrstat)
 {
     if(PviSetAttribute_usb == nullptr){
+        emit reportErrorSignal("PviSetAttribute_usb a raportat o eroare!");
         qDebug() << "PviSetAttribute_usb not initialized";
         return -1;
     }
@@ -264,6 +271,7 @@ PicoTestModule::initialize()
     mPicoLib = LoadLibraryA("visa32.dll");
     if(mPicoLib == nullptr){
         // Something went wrong
+        emit reportErrorSignal("Libraria visa32.dll nu a fost gasita!");
         qDebug() << "cannot load pico test library!";
         return false;
     }else{
