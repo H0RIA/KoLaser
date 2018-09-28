@@ -88,6 +88,10 @@ MainWindow::MainWindow(QWidget *parent) :
             this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
     connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),
             this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
+
+    //
+    connect(mpControlBoard,SIGNAL(reportStatus(bool)),
+            this,SLOT(reportCbStatusSlot(bool)),Qt::AutoConnection);
 }
 
 MainWindow::~MainWindow()
@@ -113,19 +117,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_openFileBtn_released()
 {
+    ui->statusDisplayTextArea->clear();
     long result;
     QString fileName = QFileDialog::getOpenFileName(this, tr("Deschidere Fisier Proiect"),
                                                     "C:/",
                                                     tr("*.*"));
     qDebug() << fileName;
 
-    /////////////////
-    if(fileName.isEmpty())
-    {
-        //Test only. Make it non-empty.
-        fileName = "test change";
-    }
-    /////////////////
     if(!fileName.isEmpty())
     {
         result = this->generateProjectData(QJsonDocument::fromJson(readJson(fileName).toUtf8()));
@@ -402,21 +400,7 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::KOBER_COLOR_ERROR);
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_FAILED);
         }
-        mpPicoTimer->start(300000);
-
-        //mbStatusCb = mpControlBoard->initializeDevice();
-
-//        if(mbStatusCb)
-//        {
-//            printOutputToUser("Control Board-ul a fost detectat!",OutputColor::KOBER_COLOR_SUCCESS);
-//            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_SUCCESSUCCESSS);
-//        }
-//        else
-//        {
-//            printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_COLOR_ERROR);
-//            setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_FAILED);
-//        }
-        mpCBTimer->start(300000);
+        mpPicoTimer->start(15000);
     }
 }
 
@@ -437,7 +421,8 @@ void MainWindow::on_InitLaserBtn_released()
 
 void MainWindow::checkPicoHeartbeat()
 {
-    if(mpPicoModule->heartbeat())
+    double pOutput = 0;
+    if(mpPicoModule->heartbeat(&pOutput))
     {
         printOutputToUser("Multimetrul este conectat.",OutputColor::KOBER_COLOR_REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_SUCCESS);
@@ -452,17 +437,7 @@ void MainWindow::checkPicoHeartbeat()
 
 void MainWindow::checkCbHeartbeat()
 {
-    if(mpControlBoard->heartbeat())
-    {
-        printOutputToUser("Placa de control este conectata.",OutputColor::KOBER_COLOR_REPORT);
-        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_SUCCESS);
-        mbStatusCb = true;
-    }
-    else {
-        printOutputToUser("Placa de control a fost deconectata.",OutputColor::KOBER_COLOR_ERROR);
-        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_FAILED);
-        mbStatusCb = true;
-        }
+    mpControlBoard->heartbeat();
 }
 
 void MainWindow::printOutputToUser(QString qsMsg, OutputColor color)
@@ -494,6 +469,7 @@ void MainWindow::on_saveSerialSettings_released()
         mpControlBoard->saveSerialSettings(ui->portNameCBox->currentText(),QSerialPort::Baud9600,QSerialPort::Data8,
                                            QSerialPort::NoParity,QSerialPort::OneStop,QSerialPort::NoFlowControl);
         printOutputToUser("Aplicatia asculta la portul: " + ui->portNameCBox->currentText(),OutputColor::KOBER_COLOR_REPORT);
+        mpCBTimer->start(15000); //TODO: Change to 300000
     }
 }
 
@@ -508,8 +484,19 @@ void MainWindow::on_btnLaserSettings_released()
 
 void MainWindow::on_startBtn_released()
 {
-    printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_COLOR_REPORT);
-    mpScModule->beginTaskMark();
+    if (this->mbStatusPico && mbStatusCb)
+    {
+        printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_COLOR_REPORT);
+        mpScModule->beginTaskMark();
+    }
+    else {
+        if (!mbStatusCb)
+        {
+            printOutputToUser("Marcarea nu poate incepe fara Control Board!", OutputColor::KOBER_COLOR_ERROR);
+        } if (!mbStatusPico) {
+            printOutputToUser("Marcarea nu poate incepe fara Multimetru!", OutputColor::KOBER_COLOR_ERROR);
+        }
+    }
 
 }
 
@@ -561,4 +548,19 @@ void MainWindow::on_align_done()
 void MainWindow::printOutputToUserSlot(QString qsMsg, OutputColor color)
 {
     this->printOutputToUser(qsMsg,color);
+}
+
+void MainWindow::reportCbStatusSlot(bool isCbAlive)
+{
+    mbStatusCb = isCbAlive;
+    if(mbStatusCb)
+    {
+        printOutputToUser("Control Board-ul a fost detectat!",OutputColor::KOBER_COLOR_SUCCESS);
+        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_SUCCESS);
+    }
+    else
+    {
+        printOutputToUser("Control Board-ul nu a fost detectat!",OutputColor::KOBER_COLOR_ERROR);
+        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_STATUS_FAILED);
+    }
 }

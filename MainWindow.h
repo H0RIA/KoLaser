@@ -59,6 +59,7 @@ private slots:
     void on_alignBtn_released();
     void on_align_done();
     void printOutputToUserSlot(QString qsMsg, OutputColor color);
+    void reportCbStatusSlot(bool isCbAlive);
 };
 
 #endif // MAINWINDOW_H

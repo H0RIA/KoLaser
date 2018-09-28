@@ -42,37 +42,29 @@ ControlBoardModule::~ControlBoardModule()
 
 bool ControlBoardModule::initializeDevice()
 {
+    qDebug() << "Sending request to Cb";
     if(!mpSerialPort->isOpen())
     {
         mpSerialPort->open(QIODevice::ReadWrite);
     }
-    if(mpSerialPort->write(QString("?").toLatin1()) == -1)
+    if (mpSerialPort->isOpen())
     {
-        //Error Message box
+        qDebug() << "Writing ? to serial";
+        mpSerialPort->write(QString("?").toLatin1());
     }
-//    if(mpSerialPort->waitForReadyRead(10000))
-//    {
-//        QByteArray array = mpSerialPort->read(2);
-//        QString qResponse = QString().fromStdString(array.toStdString());
-//        qDebug() << qResponse;
-
-//        if(qResponse == "?NUL")
-//        {
-//            bControlBoardModuleAlive = true;
-//        }
-//    }
-//    else { //TIMEOUT
- //   }
+    mpTimer->setSingleShot(true);
+    mpTimer->start(10000);
     return bControlBoardModuleAlive;
 }
 
 void ControlBoardModule::onControlBoardTimeout()
 {
-    //BOARD TIMEOUT
+    emit reportStatus(false);
+    bControlBoardModuleAlive = false;
 }
 bool ControlBoardModule::heartbeat()
 {
-    return bControlBoardModuleAlive;
+    return initializeDevice();
 }
 
 bool ControlBoardModule::saveSerialSettings(QString qPortName,
@@ -95,7 +87,19 @@ bool ControlBoardModule::saveSerialSettings(QString qPortName,
 void ControlBoardModule::readData()
 {
     const QByteArray data = mpSerialPort->readAll();
-    QString DataAsString =
-    QString::fromUtf8(data);
-    qDebug() << DataAsString;
+    QString DataAsString =QString::fromUtf8(data);
+    QString qResponse = QString().fromStdString(data.toStdString());
+    qDebug() << qResponse;
+    if(qResponse == "?NUL")
+    {
+        emit reportStatus(true);
+        bControlBoardModuleAlive = true;
+    }
+    else
+    {
+        if(data.at(1) != QString("0")) {
+            emit reportStatus(false);
+            bControlBoardModuleAlive = false;
+        }
+    }
 }

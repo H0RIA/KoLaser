@@ -15,7 +15,7 @@ public:
     ~PicoModule();
 
     bool initializeDevice();
-    bool heartbeat();
+    bool heartbeat(double *pOutput);
     bool isPicoModuleAlive();
 
 

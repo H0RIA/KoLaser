@@ -33,6 +33,8 @@ public:
 private slots:
     void onControlBoardTimeout();
     void readData();
+signals:
+    void reportStatus(bool isCbAlive);
 };
 
 #endif // CONTROLBOARDMODULE_H

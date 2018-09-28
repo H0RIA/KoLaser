@@ -25,17 +25,23 @@ bool PicoModule::initializeDevice()
     return mpLibrary->isInitialized();
 }
 
-bool PicoModule::heartbeat()
+bool PicoModule::heartbeat(double* pOutput)
 {
-    double output = 0;
-    if(!mpLibrary->readVoltage(&output))
+    if (!mpLibrary->isInitialized())
     {
-        emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_COLOR_ERROR);
+        emit printOutputToUser("Multimetrul nu este initializat!",OutputColor::KOBER_COLOR_ERROR);
+        bIsPicoModuleAlive = false;
+        return false;
+    }
+    if(!mpLibrary->readVoltage(pOutput))
+    {
         bIsPicoModuleAlive = false;
     }
     else
     {
-        emit printOutputToUser(QString("Read value: %1").arg(output),OutputColor::KOBER_COLOR_SUCCESS);
+        emit printOutputToUser(
+                    QString("Multimetrul este contectat si a citit valoarea %1").arg(QString::number(*pOutput)),
+                    OutputColor::KOBER_COLOR_REPORT);
         bIsPicoModuleAlive = true;
     }
     return bIsPicoModuleAlive;
@@ -52,11 +58,11 @@ bool PicoModule::readVoltage(double* pOutput)
     {
         if(!mpLibrary->readVoltage(pOutput))
         {
-            emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_COLOR_ERROR);
+            bIsPicoModuleAlive = false;
         }
         else
         {
-            emit printOutputToUser(QString("Read value: %1").arg(*pOutput),OutputColor::KOBER_COLOR_SUCCESS);
+            bIsPicoModuleAlive = true;
         }
         return true;
     }
