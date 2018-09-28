@@ -3,12 +3,7 @@
 
 #include<QObject>
 #include "picotest_module.h"
-//-----------------------------------
-#ifdef Q_OS_MACOS
-class PicoTestModule
-{};
-#endif
-//-----------------------------------
+
 class PicoModule : public QObject
 {
     Q_OBJECT
@@ -19,7 +14,6 @@ public:
     ~PicoModule();
 
     bool initializeDevice();
-    bool configureDevice();
     bool heartbeat();
     bool isPicoModuleAlive();
 

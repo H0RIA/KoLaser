@@ -151,40 +151,9 @@ QString MainWindow::readJson(QString jsonFilePath)
     QString json = file.readAll();
     if(json.isEmpty())
     {
-#ifdef Q_OS_MACOS
-        //TEST ONLY
-        json = "{"
-               "\"Proiect\": \"Senzor Presiune 0 - 4 bari\","
-               "\"PuterePCB\" : \"0\","
-               "\"VitezaPCB\" : \"100\","
-               "\"RutaPCB\" : [\"-9.500>10.000\", \"9.500>10.000\", \"9.500>-10.000\", \"-9.500>-10.000\", \"-9.500>10.000\", \"-9.500>10.000\"],"
-                "\"Tasks\" :"
-                   "[{"
-                       "\"Tip_Task\" : \"INDEPENDENT\","
-                       "\"PutereDioda\" : \"50\","
-                       "\"Viteza\" : \"10\","
-                       "\"FrecventaQ\" : \"5\","
-                       "\"Ruta\" : [\"S0.123>1.123\", \"A0.123>2.123\",\"1.123>2.123\",\"1.123>1.123\",\"S0.123>4.123\",\"A0.123>3.123\",\"1.123>3.123\",\"1.123>4.123\",\"S0.123>0.123\"],"
-                       "\"ValoareTinta\" : \"1200\","
-                       "\"NrRRA\" : \"1\","
-                       "\"NrRRD1\" : \"NA\","
-                       "\"NrRRD2\" : \"NA\""
-                   "}]"
-               "}";
-#endif
+        printOutputToUser("Nu a fost selectat un fisier de configurare valid!", OutputColor::KOBER_ERROR);
     }
     file.close();
-
-#ifdef Q_OS_MACOS
-    ////////////////////////////////////
-    //TEST Only. Don't need to check twice
-    if(json.isEmpty())
-    {
-        throw "Something is really wrong.";
-    }
-    qDebug()<< "Loaded json:" << json;
-    ////////////////////////////////////
-#endif
     return json;
 }
 int MainWindow::generateProjectData(QJsonDocument doc)
@@ -431,7 +400,7 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::KOBER_ERROR);
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);
         }
-        mpPicoTimer->start(300000); //TODO: MODIFY TO 5 MINUTES.
+        mpPicoTimer->start(300000);
 
         //mbStatusCb = mpControlBoard->initializeDevice();
 
@@ -470,10 +439,13 @@ void MainWindow::checkPicoHeartbeat()
     {
         printOutputToUser("Multimetrul este conectat.",OutputColor::KOBER_REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_SUCCESS);
+        mbStatusPico = true;
     }
     else {
         printOutputToUser("Multimetrul a fost deconectat.",OutputColor::KOBER_ERROR);
-        setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);}
+        setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_FAILED);
+        mbStatusPico = false;
+        }
 }
 
 void MainWindow::checkCbHeartbeat()
@@ -482,10 +454,13 @@ void MainWindow::checkCbHeartbeat()
     {
         printOutputToUser("Placa de control este conectata.",OutputColor::KOBER_REPORT);
         setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_SUCCESS);
+        mbStatusCb = true;
     }
     else {
         printOutputToUser("Placa de control a fost deconectata.",OutputColor::KOBER_ERROR);
-        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);}
+        setStatusOnButton(ui->cbStatusDisplay,Status::KOBER_FAILED);
+        mbStatusCb = true;
+        }
 }
 
 void MainWindow::printOutputToUser(QString qsMsg, OutputColor color)

@@ -9,7 +9,11 @@ PicoModule::PicoModule()
 }
 PicoModule::~PicoModule()
 {
-
+    if (mpLibrary != 0)
+    {
+        delete mpLibrary;
+        mpLibrary = 0;
+    }
 }
 
 bool PicoModule::initializeDevice()
@@ -18,24 +22,17 @@ bool PicoModule::initializeDevice()
     return mpLibrary->isInitialized();
 }
 
-bool PicoModule::configureDevice()
-{
-    //Multimetrul : VDC , Range 10V, precizie MAX (6digit1/2), FAST reading , Auto Zero off, Auto Gain off
-
-    return true;
-}
-
 bool PicoModule::heartbeat()
 {
     double output = 0;
     if(!mpLibrary->readVoltage(&output))
     {
-        emit printOutputToUser("Cannot read voltage!");
+        emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_ERROR);
         bIsPicoModuleAlive = false;
     }
     else
     {
-        emit printOutputToUser(QString("Read value: %1").arg(output));
+        emit printOutputToUser(QString("Read value: %1").arg(output),OutputColor::KOBER_SUCCES);
         bIsPicoModuleAlive = true;
     }
     return bIsPicoModuleAlive;
@@ -52,11 +49,11 @@ bool PicoModule::readVoltage(double* pOutput)
     {
         if(!mpLibrary->readVoltage(pOutput))
         {
-            emit printOutputToUser("Cannot read voltage!");
+            emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_ERROR);
         }
         else
         {
-            emit printOutputToUser(QString("Read value: %1").arg(*pOutput));
+            emit printOutputToUser(QString("Read value: %1").arg(*pOutput),OutputColor::KOBER_SUCCES);
         }
         return true;
     }
