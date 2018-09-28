@@ -27,12 +27,12 @@ bool PicoModule::heartbeat()
     double output = 0;
     if(!mpLibrary->readVoltage(&output))
     {
-        emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_ERROR);
+        emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_COLOR_ERROR);
         bIsPicoModuleAlive = false;
     }
     else
     {
-        emit printOutputToUser(QString("Read value: %1").arg(output),OutputColor::KOBER_SUCCES);
+        emit printOutputToUser(QString("Read value: %1").arg(output),OutputColor::KOBER_COLOR_SUCCESS);
         bIsPicoModuleAlive = true;
     }
     return bIsPicoModuleAlive;
@@ -49,11 +49,11 @@ bool PicoModule::readVoltage(double* pOutput)
     {
         if(!mpLibrary->readVoltage(pOutput))
         {
-            emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_ERROR);
+            emit printOutputToUser(QString("Cannot read voltage!"),OutputColor::KOBER_COLOR_ERROR);
         }
         else
         {
-            emit printOutputToUser(QString("Read value: %1").arg(*pOutput),OutputColor::KOBER_SUCCES);
+            emit printOutputToUser(QString("Read value: %1").arg(*pOutput),OutputColor::KOBER_COLOR_SUCCESS);
         }
         return true;
     }

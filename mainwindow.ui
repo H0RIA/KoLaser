@@ -54,7 +54,7 @@
        <string notr="true">background-color: rgb(255, 255, 255);</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="detaliiProiectTab">
        <attribute name="title">
@@ -843,7 +843,7 @@ border: 3px solid rgb(0, 0, 0)</string>
          <x>0</x>
          <y>0</y>
          <width>788</width>
-         <height>144</height>
+         <height>158</height>
         </rect>
        </property>
        <property name="minimumSize">
@@ -899,7 +899,7 @@ border: 3px solid rgb(0, 0, 0)</string>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

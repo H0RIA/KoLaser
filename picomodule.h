@@ -3,6 +3,7 @@
 
 #include<QObject>
 #include "picotest_module.h"
+#include "painter.h"
 
 class PicoModule : public QObject
 {
@@ -24,7 +25,7 @@ public slots:
 private:
     PicoTestModule *mpLibrary;
 signals:
-    void printOutputToUser(QString);
+    void printOutputToUser(QString msg, OutputColor color);
 
 };
 
