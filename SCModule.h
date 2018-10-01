@@ -35,7 +35,7 @@ typedef void* HMODULE;
     if (res != SC_OK)\
     {\
         QString strError = QString("%1 returned %2").arg(fnName).arg(res);\
-        emit printOutputToUser(strError,OutputColor::KOBER_COLOR_ERROR);\
+         qDebug() << strError;\
     }
 #endif // !TREAT_RESULT
 
@@ -74,7 +74,7 @@ class SCModule : public QObject
         void beginTaskMark();
         void setDeviceSpeed();
         void actuallyMarkTasks(bool bIsAlignment);
-
+        void printOptovalues();
         void setProjectData(ProjectData* pProjectData);
 
         // DLL function mapping

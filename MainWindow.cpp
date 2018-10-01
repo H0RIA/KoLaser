@@ -93,6 +93,12 @@ MainWindow::MainWindow(QWidget *parent) :
     //
     connect(mpControlBoard,SIGNAL(reportStatus(bool)),
             this,SLOT(reportCbStatusSlot(bool)),Qt::AutoConnection);
+
+    connect(mpControlBoard,SIGNAL(abandonSequence()), this, SLOT(abandonSequence()),Qt::AutoConnection);
+    connect(mpControlBoard,SIGNAL(invalidTaskSignal(long)),this,SLOT(invalidTaskSlot(long)),Qt::AutoConnection);
+    connect(mpControlBoard,SIGNAL(beginMarking()),this, SLOT(beginMarking()),Qt::AutoConnection);
+
+    currentTaskIndex = 0;
 }
 
 MainWindow::~MainWindow()
@@ -210,11 +216,6 @@ int MainWindow::generateProjectData(QJsonDocument doc)
     else
     {
         int nPcbSpeed = jsonObj["VitezaPCB"].toString().toInt();
-        if (nPcbSpeed < 0.1 || nPcbSpeed > 100)
-        {
-            printOutputToUser("Viteza laserului la aliniere are o valoare incorecta!",OutputColor::KOBER_COLOR_ERROR);
-            return result;
-        }
         mpProjectData->setPcbLaserSpeed(nPcbSpeed);
     }
 
@@ -395,14 +396,18 @@ void MainWindow::validProjectLoaded(bool bValidProject)
             mpPicoModule->readVoltage(&nPicoValue);
             printOutputToUser(QString("Multimetrul este contectat si a citit valoarea %1").arg(nPicoValue),OutputColor::KOBER_COLOR_SUCCESS);
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_SUCCESS);
+            mpControlBoard->setNumericalValues(mpProjectData->getTaskList()->at(currentTaskIndex)->mGoal,
+                                               nPicoValue,ui->rFeedbackLineEdit->text().toDouble());
         }
         else
         {
             printOutputToUser("Multimetrul nu a fost detectat!",OutputColor::KOBER_COLOR_ERROR);
             setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_FAILED);
+            mpControlBoard->setNumericalValues(mpProjectData->getTaskList()->at(currentTaskIndex)->mGoal,
+                                               0,ui->rFeedbackLineEdit->text().toDouble());
         }
         mpPicoTimer->start(15000);
-        mpOptoInTimer->start(100);
+        mpOptoInTimer->start(500);
     }
 }
 
@@ -429,11 +434,15 @@ void MainWindow::checkPicoHeartbeat()
         printOutputToUser(QString("Multimetrul este conectat is are valoarea:%1.").arg(pOutput),
                           OutputColor::KOBER_COLOR_REPORT);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_SUCCESS);
+        mpControlBoard->setNumericalValues(mpProjectData->getTaskList()->at(currentTaskIndex)->mGoal,
+                                           pOutput,ui->rFeedbackLineEdit->text().toDouble());
         mbStatusPico = true;
     }
     else {
         printOutputToUser("Multimetrul a fost deconectat.",OutputColor::KOBER_COLOR_ERROR);
         setStatusOnButton(ui->picoStatusDisplay,Status::KOBER_STATUS_FAILED);
+        mpControlBoard->setNumericalValues(mpProjectData->getTaskList()->at(currentTaskIndex)->mGoal,
+                                           0,ui->rFeedbackLineEdit->text().toDouble());
         mbStatusPico = false;
         }
 }
@@ -472,7 +481,7 @@ void MainWindow::on_saveSerialSettings_released()
         mpControlBoard->saveSerialSettings(ui->portNameCBox->currentText(),QSerialPort::Baud9600,QSerialPort::Data8,
                                            QSerialPort::NoParity,QSerialPort::OneStop,QSerialPort::NoFlowControl);
         printOutputToUser("Aplicatia asculta la portul: " + ui->portNameCBox->currentText(),OutputColor::KOBER_COLOR_REPORT);
-        mpCBTimer->start(15000); //TODO: Change to 300000
+        mpCBTimer->start(3000000); //TODO: Change to 300000
     }
 }
 
@@ -504,10 +513,6 @@ void MainWindow::on_startBtn_released()
                                              mpProjectData->getTaskList()->at(currentTaskIndex)->NrRRD1,
                                              mpProjectData->getTaskList()->at(currentTaskIndex)->NrRRD2);
         }
-
-        printOutputToUser("A inceput procesul de marcare a taskurilor.",OutputColor::KOBER_COLOR_REPORT);
-        mpScModule->beginTaskMark();
-        ui->startBtn->setEnabled(false);
     }
     else {
         if (!mbStatusCb)
@@ -587,11 +592,30 @@ void MainWindow::reportCbStatusSlot(bool isCbAlive)
 
 bool MainWindow::getOptoInValues()
 {
-    //TODO: Check OptoinValues
+    mpScModule->printOptovalues();
     return true;
 }
 
 void MainWindow::checkOptoInStatusSlot()
 {
     getOptoInValues();
+}
+
+void MainWindow::abandonSequence()
+{
+    printOutputToUser(QString("Marcare task %1 abandonata.").arg(currentTaskIndex),OutputColor::KOBER_COLOR_ERROR);
+}
+
+void MainWindow::invalidTaskSlot(long logError)
+{
+    QString log = QString("Status %1: R laser_init %2 > sau = Rtinta %3").arg(currentTaskIndex).arg(
+                logError).arg(mpProjectData->getTaskList()->at(currentTaskIndex)->mGoal);
+    printOutputToUser(log,OutputColor::KOBER_COLOR_ERROR);
+    //TODO: Log to file;
+    mpProjectData->getTaskList()->at(currentTaskIndex)->isDone = true;
+}
+
+void MainWindow::beginMarking()
+{
+    mpScModule->beginTaskMark();
 }

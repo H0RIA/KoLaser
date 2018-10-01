@@ -65,6 +65,9 @@ private slots:
     void printOutputToUserSlot(QString qsMsg, OutputColor color);
     void reportCbStatusSlot(bool isCbAlive);
     void checkOptoInStatusSlot();
+    void abandonSequence();
+    void invalidTaskSlot(long logValue);
+    void beginMarking();
 };
 
 #endif // MAINWINDOW_H

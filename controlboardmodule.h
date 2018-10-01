@@ -19,7 +19,11 @@ class ControlBoardModule : public QObject
 
     bool bControlBoardModuleAlive;
     bool isExpectingRequestToTrimResponse;
-    long Ulsbdac = 0.00000476837158203125;
+    bool isExpectingRequestToMeasureResponse;
+
+    double Ulsbdac = 0.00000476837158203125;
+    double Rtinta, AladelaPico, Vconst, Rfeedback;
+    int id1,id2,id3;
 
     QComboBox* mpPortNameComboBox;
 public:
@@ -35,13 +39,17 @@ public:
                             QSerialPort::StopBits sb,
                             QSerialPort::FlowControl fc);
     void requestToMeasure(int id1, int id2, int id3);
-
+    void requestToTrim();
+    void setNumericalValues(double TargetResist, double AlaDelaPico, double Rfeedback);
 private slots:
     void onControlBoardTimeout();
     void readData();
     void requestTimeout();
 signals:
     void reportStatus(bool isCbAlive);
+    void abandonSequence();
+    void invalidTaskSignal(long logValue);
+    void beginMarking();
 };
 
 #endif // CONTROLBOARDMODULE_H

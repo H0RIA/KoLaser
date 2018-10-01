@@ -250,7 +250,7 @@ bool SCModule::initializeDevice()
         else
         {
             emit printOutputToUser("Fisierul de setari a fost incarcat.",
-                                   OutputColor::KOBER_COLOR_ERROR);
+                                   OutputColor::KOBER_COLOR_REPORT);
         }
     }
     return true;
@@ -574,6 +574,15 @@ void SCModule::actuallyMarkTasks(bool isAlignment)
             TREAT_RESULT("SCSciSetMoveLaserState",result);
         }
     }
+}
+
+void SCModule::printOptovalues()
+{
+    long result = SCSciGetDevicePortValue(26,&result);
+    qDebug() << "1=" << QString::number(result,2);
+
+    result = SCSciGetDevicePortValue(21,&result);
+    qDebug() << "2=" << QString::number(result,2);
 }
 
 long SCModule::SCSciSetCardType(char *card_type){ return sc_sci_set_card_type(card_type); }
