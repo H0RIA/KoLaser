@@ -19,10 +19,8 @@ SCModule::SCModule()
     loadLibrary("C:/Windows/SysWOW64/sc_optic.dll");
 
     mpExecutionTimer = new QTimer(this);
-    mpSafetyTimer = new QTimer();
 
-    connect(mpExecutionTimer,SIGNAL(timeout()),this,SLOT(checkExecution()),Qt::AutoConnection);
-    connect(mpSafetyTimer, SIGNAL(timeout()),this,SLOT(safetyStop()),Qt::AutoConnection);
+    connect(mpExecutionTimer,SIGNAL(timeout()),this,SLOT(checkExecution()));
 }
 SCModule::~SCModule()
 {
@@ -291,12 +289,9 @@ void SCModule::checkExecution()
 
     if(!isExecuting)
     {
-        mpExecutionTimer->stop();
-        mpSafetyTimer->stop();
         //Execution finished.
         SCSciInitOptic();
         //TODO: Notify next task.
-        emit reportStatus(true);
     }
 
 }
@@ -517,9 +512,6 @@ void SCModule::beginTaskMark(int currentTaskIndex)
         result = SCSciFlush();
         TREAT_RESULT("SCSciFlush",result);
         mpExecutionTimer->start(50);
-        mpSafetyTimer->setSingleShot(true);
-        mpSafetyTimer->start(3000);
-
     }
     else
     {
@@ -530,10 +522,11 @@ void SCModule::beginTaskMark(int currentTaskIndex)
 void SCModule::actuallyMarkTasks(int currentTaskIndex, bool isAlignment)
 {
     double result = 0;
-    Task* currentTask;
-	if (!isAlignment) {
-		QList<Task*>* pTaskList = mpProjectData->getTaskList();
-        currentTask = pTaskList->at(currentTaskIndex);
+    QList<Task*>* pTaskList = mpProjectData->getTaskList();
+    Task* currentTask = pTaskList->at(currentTaskIndex);
+
+    if(!isAlignment)
+    {
         // calculate and set power and frequency values for YAG laser
         result = SCSciSetDevicePortValue(scComStandardDeviceStyleIDPortLaser,currentTask->mLaserPower);
         TREAT_RESULT("SCSciSetDevicePortValue",result);
@@ -541,37 +534,12 @@ void SCModule::actuallyMarkTasks(int currentTaskIndex, bool isAlignment)
         result = SCSciSetDeviceTimer(scComStandardDeviceStyleIDQSwitchPeriod,1/currentTask->mQFrequency*1e+6);
         TREAT_RESULT("SCSciSetDeviceTimer",result);
 
-        result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, currentTask->mLaserSpeed);
+        result =  SCSciSetDeviceSpeed(scComStandardDeviceStyleIDMarkSpeedFU, pTaskList->at(i)->mLaserSpeed);
         TREAT_RESULT("SCSciSetDeviceSpeed",result);
     }
-    if(currentTaskIndex<0)
+    if(currentTask<0)
     {
         //Need to go through all tasks, all points, to queue them for aligning.
-        for(int i = 0; i < mpProjectData->getTaskList()->count(); i++)
-        {
-            QList<Punct*>* pPointList = mpProjectData->getTaskList()->at(i)->getPointList();
-            for(int j = 0; j < pPointList->count(); j++)
-            {
-                Punct* pPoint = pPointList->at(j);
-                if(pPoint)
-                {
-                    if(pPoint->mOperatie == "S")
-                    {
-                        result = SCSciSetMoveLaserState(0);
-                        TREAT_RESULT("SCSciSetMoveLaserState",result);
-                    }
-                    if(pPoint->mOperatie == "A")
-                    {
-                        result = SCSciSetMoveLaserState(1);
-                        TREAT_RESULT("SCSciSetMoveLaserState",result);
-                    }
-                    result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
-                    TREAT_RESULT("SCSciMoveAbs",result);
-                 }
-                result = SCSciSetMoveLaserState(0);
-                TREAT_RESULT("SCSciSetMoveLaserState",result);
-            }
-        }
         return;
     }
     QList<Punct*>* pPointList = currentTask->getPointList();
@@ -592,39 +560,33 @@ void SCModule::actuallyMarkTasks(int currentTaskIndex, bool isAlignment)
             }
             result = SCSciMoveAbs(pPoint->mX,pPoint->mY);
             TREAT_RESULT("SCSciMoveAbs",result);
+
+            //                emit printOutputToUser(QString("Se misca laserul %1 la punctul %2 al taskului %3 cu"
+            //                                               "coordonatele: %4 si %5").
+            //                                       arg(pPoint->mOperatie).arg(j+1).arg(i+1)
+            //                                       .arg(pPoint->mX).arg(pPoint->mY), OutputColor::KOBER_COLOR_ERROR);
         }
         result = SCSciSetMoveLaserState(0);
         TREAT_RESULT("SCSciSetMoveLaserState",result);
     }
 }
-
-long SCModule::printOptovalues()
-{
-    long result = 0;
-    //    SCSciGetDevicePortValue(26,&result);
-    //    qDebug() << "1=" << QString::number(result,2);
-    return 4;
-    SCSciGetDevicePortValue(21,&result);
-    qDebug() << "2=" << QString::number(result,2);
-    return result;
-    //    char *response = new char[256 * sizeof(char)];
-    //    result = SCSciGetIdentString(response);
-    //    qDebug() << "result=" << result << " response=" << response;
-
-    SCSciGetExecute(&result);
-    qDebug() << "ScSCiExecute()" << result;
 }
 
-void SCModule::safetyStop()
+void SCModule::printOptovalues()
 {
-    //Safety stop after 3 seconds.
-    long isExecuting = 0;
-    SCSciGetExecute(&isExecuting);
-    if (isExecuting)
-    {
-        SCSciSetExecute(0);
-        SCSciInitOptic();
-    }
+    long result = 0;
+    SCSciGetDevicePortValue(26,&result);
+    qDebug() << "1=" << QString::number(result,2);
+
+    SCSciGetDevicePortValue(21,&result);
+    qDebug() << "2=" << QString::number(result,2);
+
+//    char *response = new char[256 * sizeof(char)];
+//    result = SCSciGetIdentString(response);
+//    qDebug() << "result=" << result << " response=" << response;
+
+     SCSciGetExecute(&result);
+    qDebug() << "ScSCiExecute()" << result;
 }
 
 long SCModule::SCSciSetCardType(char *card_type){ return sc_sci_set_card_type(card_type); }

@@ -67,6 +67,10 @@ MainWindow::MainWindow(QWidget *parent) :
     setStatusOnButton(ui->cbStatusDisplay, Status::KOBER_STATUS_NOT_INITIALIZED);
     setStatusOnButton(ui->uscDisplay, Status::KOBER_STATUS_NOT_INITIALIZED);
 
+    setStatusOnButton(ui->Interlock, Status::KOBER_STATUS_NOT_INITIALIZED);
+        setStatusOnButton(ui->PPCB, Status::KOBER_STATUS_NOT_INITIALIZED);
+            setStatusOnButton(ui->HPCB, Status::KOBER_STATUS_NOT_INITIALIZED);
+                setStatusOnButton(ui->SIN, Status::KOBER_STATUS_NOT_INITIALIZED);
     //ui->baudRateCBox->addItem("BaudRate:");
     ui->baudRateCBox->addItem("9600");
     //ui->dataBitsCBox->addItem("Data Bits:");
@@ -87,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //Printing output signals and slot.
     connect(mpScModule,SIGNAL(printOutputToUser(QString,OutputColor)),
             this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
+    connect(mpScModule,SIGNAL(reportStatus(bool)),this,SLOT(receiveStatus(bool)));
     connect(mpPicoModule, SIGNAL(printOutputToUser(QString,OutputColor)),
             this,SLOT(printOutputToUserSlot(QString, OutputColor)),Qt::AutoConnection);
 
@@ -340,7 +345,6 @@ int MainWindow::generateProjectData(QJsonDocument doc)
                              nNrRRA,
                              nNrRRD1,
                              nNrRRD2);
-       ui->opTypeLineEdit->setText(sTipTask);
        mpProjectData->getTaskList()->append(pTask);
        if(mpProjectData->getTaskList()->count() < 1)
        {
@@ -348,6 +352,10 @@ int MainWindow::generateProjectData(QJsonDocument doc)
            return result;
        }
     }
+    ui->opTypeLineEdit->setText(QString("Task %1 din %2: ")
+                                .arg(currentTaskIndex + 1)
+                                .arg(mpProjectData->getTaskList()->count())
+                                     + mpProjectData->getTaskList()->at(currentTaskIndex)->mOperationType);
     mpProjectData->toString();
     mpScModule->setProjectData(mpProjectData);
 
@@ -496,6 +504,11 @@ void MainWindow::on_btnLaserSettings_released()
 
 void MainWindow::on_startBtn_released()
 {
+    if (ui->onlyLaserCheckbox->isChecked())
+    {
+        mpScModule->beginTaskMark(currentTaskIndex);
+        return;
+    }
     //Get turrent task index
     for(int i = 0; i < mpProjectData->getTaskList()->count(); i++)
     {
@@ -520,6 +533,9 @@ void MainWindow::on_startBtn_released()
             printOutputToUser("Marcarea nu poate incepe fara Control Board!", OutputColor::KOBER_COLOR_ERROR);
         } if (!mbStatusPico) {
             printOutputToUser("Marcarea nu poate incepe fara Multimetru!", OutputColor::KOBER_COLOR_ERROR);
+        } else
+        {
+            printOutputToUser("Cel putin o intrare Opto a raportat o eroare!", OutputColor::KOBER_COLOR_ERROR);
         }
     }
 
@@ -592,8 +608,38 @@ void MainWindow::reportCbStatusSlot(bool isCbAlive)
 
 bool MainWindow::getOptoInValues()
 {
-    mpScModule->printOptovalues();
-    return true;
+    long optoValues = mpScModule->printOptovalues();
+    qDebug() << "Got opto values " << optoValues << " " << QString::number(optoValues,2);
+    bool opto1,opto2,opto3,opto4 = false;
+
+    opto4 = (optoValues >> 4) & 0x1; //shutter in
+    if (opto4)
+    {
+        setStatusOnButton(ui->SIN,Status::KOBER_STATUS_SUCCESS);
+    }
+    else setStatusOnButton(ui->SIN,Status::KOBER_STATUS_FAILED);
+
+    opto3 = (optoValues >> 3) & 0x1; // holder PCB
+    if (opto3)
+    {
+        setStatusOnButton(ui->HPCB,Status::KOBER_STATUS_SUCCESS);
+    }
+    else setStatusOnButton(ui->HPCB,Status::KOBER_STATUS_FAILED);
+
+    opto2 = (optoValues >> 2) & 0x1; // interlock
+    if (opto2)
+    {
+        setStatusOnButton(ui->Interlock,Status::KOBER_STATUS_SUCCESS);
+    }
+    else setStatusOnButton(ui->Interlock,Status::KOBER_STATUS_FAILED);
+
+    opto1 = (optoValues >> 1) & 0x1; // Prezenta PCB
+    if (opto1)
+    {
+        setStatusOnButton(ui->PPCB,Status::KOBER_STATUS_SUCCESS);
+    }
+    else setStatusOnButton(ui->PPCB,Status::KOBER_STATUS_FAILED);
+    return opto1 && opto2 && opto3 && opto4;
 }
 
 void MainWindow::checkOptoInStatusSlot()
@@ -617,5 +663,25 @@ void MainWindow::invalidTaskSlot(long logError)
 
 void MainWindow::beginMarking()
 {
-    mpScModule->beginTaskMark();
+    mpScModule->beginTaskMark(currentTaskIndex);
+}
+
+void MainWindow::receiveStatus(bool isSuccess)
+{
+    mpProjectData->getTaskList()->at(currentTaskIndex)->isDone = true;
+
+    if(currentTaskIndex + 1 == mpProjectData->getTaskList()->count())
+    {
+        //Finished.
+        return;
+    }
+    currentTaskIndex++;
+    ui->opTypeLineEdit->setText(QString("Task %1 din %2: ")
+                                .arg(currentTaskIndex + 1)
+                                .arg(mpProjectData->getTaskList()->count())
+                                     + mpProjectData->getTaskList()->at(currentTaskIndex)->mOperationType);
+    if(isSuccess)
+    {
+        on_startBtn_released();
+    }
 }

@@ -57,6 +57,7 @@ class SCModule : public QObject
     long mLaserPort;
 
     QTimer* mpExecutionTimer;
+    QTimer* mpSafetyTimer;
 
     ProjectData* mpProjectData;
 
@@ -71,10 +72,10 @@ class SCModule : public QObject
         bool initializeDevice();
         bool isDeviceInitialized() { return mbIsDeviceInitialized; }
         void markAlignment();
-        void beginTaskMark();
+        void beginTaskMark(int currentTaskIndex);
         void setDeviceSpeed();
-        void actuallyMarkTasks(bool bIsAlignment);
-        void printOptovalues();
+        void actuallyMarkTasks(int currentTaskIndex, bool bIsAlignment);
+        long printOptovalues();
         void setProjectData(ProjectData* pProjectData);
 
         // DLL function mapping
@@ -150,8 +151,10 @@ class SCModule : public QObject
         long SCSciSetDeviceMapLaserPort(long Port);
 private slots:
         void checkExecution();
+        void safetyStop();
 signals:
         void printOutputToUser(QString, OutputColor);
+        void reportStatus(bool bIsSuccess);
 };
 
 #endif // SCMODULE_H

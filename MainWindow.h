@@ -68,6 +68,7 @@ private slots:
     void abandonSequence();
     void invalidTaskSlot(long logValue);
     void beginMarking();
+    void receiveStatus(bool bIsSuccess);
 };
 
 #endif // MAINWINDOW_H
